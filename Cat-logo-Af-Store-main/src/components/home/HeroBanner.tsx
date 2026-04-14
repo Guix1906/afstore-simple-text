@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfig } from '../../hooks/useOptimizedQueries';
 import StableImage from '../ui/StableImage';
-import { DEFAULT_IMAGE_FALLBACK, getOptimizedImage } from '../../utils/imageOptimizer';
+import { DEFAULT_IMAGE_FALLBACK, getResponsiveImageSources } from '../../utils/imageOptimizer';
 
 const DEFAULT_SLIDES = [
   {
@@ -28,6 +28,7 @@ const HeroBanner = memo(function HeroBanner() {
   const { data: config, isLoading } = useConfig();
   const [current, setCurrent] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [isSafariIOS, setIsSafariIOS] = useState(false);
 
   const slides = useMemo(() => {
     if (!config) return DEFAULT_SLIDES;
@@ -44,21 +45,26 @@ const HeroBanner = memo(function HeroBanner() {
       id: `hero-${index}`,
       title: index % 2 === 0 ? "Nova Coleção — Estilo" : "Alta — Performance",
       subtitle: index % 2 === 0 ? "Conforto em movimento" : "Tecnologia têxtil de ponta",
-      image: getOptimizedImage(url, 1200),
+      image: getResponsiveImageSources(url),
       link: "/categorias"
     }));
   }, [config]);
 
   useEffect(() => {
+    const ua = navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    const isSafari = /Safari/i.test(ua) && !/Chrome|CriOS|EdgiOS|FxiOS/i.test(ua);
+    setIsSafariIOS(isIOS && isSafari);
+
     if (slides.length <= 1) return;
 
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduceMotion(media.matches);
+    setReduceMotion(media.matches || (isIOS && isSafari));
 
     const onMotionChange = (event: MediaQueryListEvent) => setReduceMotion(event.matches);
     media.addEventListener('change', onMotionChange);
 
-    if (media.matches) {
+    if (media.matches || (isIOS && isSafari)) {
       return () => media.removeEventListener('change', onMotionChange);
     }
 
@@ -70,6 +76,52 @@ const HeroBanner = memo(function HeroBanner() {
       clearInterval(timer);
     };
   }, [slides.length]);
+
+  useEffect(() => {
+    if (!slides.length) return;
+
+    const first = slides[0]?.image;
+    if (!first?.src) return;
+
+    const preload = document.createElement('link');
+    preload.rel = 'preload';
+    preload.as = 'image';
+    preload.href = first.src;
+    if (first.webpSrcSet) {
+      preload.setAttribute('imagesrcset', first.webpSrcSet);
+      preload.setAttribute('imagesizes', '(max-width: 768px) 100vw, (max-width: 1024px) 100vw, 100vw');
+    }
+    document.head.appendChild(preload);
+
+    return () => {
+      document.head.removeChild(preload);
+    };
+  }, [slides]);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
+
+    const prefetchNextSlides = () => {
+      slides.slice(1, 3).forEach((slide) => {
+        if (!slide.image?.src) return;
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = slide.image.src;
+      });
+    };
+
+    if ('requestIdleCallback' in window) {
+      const idleId = (window as Window & { requestIdleCallback: (cb: () => void) => number }).requestIdleCallback(prefetchNextSlides);
+      return () => {
+        if ('cancelIdleCallback' in window) {
+          (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+        }
+      };
+    }
+
+    const timeoutId = window.setTimeout(prefetchNextSlides, 900);
+    return () => window.clearTimeout(timeoutId);
+  }, [slides]);
 
   if (isLoading) {
     return (
@@ -96,7 +148,10 @@ const HeroBanner = memo(function HeroBanner() {
         >
           <div className="absolute inset-0 bg-gradient-to-t from-brand-bg via-transparent to-black/20 z-10" />
           <StableImage
-            src={activeSlide.image}
+            src={activeSlide.image.src}
+            webpSrcSet={activeSlide.image.webpSrcSet}
+            avifSrcSet={activeSlide.image.avifSrcSet}
+            imgSizes="(max-width: 768px) 100vw, (max-width: 1024px) 100vw, 100vw"
             fallbackSrc={DEFAULT_IMAGE_FALLBACK}
             alt="Destaque"
             className="h-full w-full object-cover opacity-70"
@@ -113,7 +168,7 @@ const HeroBanner = memo(function HeroBanner() {
           key={`content-${activeSlide.id}`}
           initial={reduceMotion ? false : { y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={reduceMotion ? { duration: 0 } : { duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+          transition={reduceMotion || isSafariIOS ? { duration: 0 } : { duration: 0.28, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col items-center"
         >
           <h2 className="font-banner-display text-4xl md:text-6xl font-bold text-brand-text mb-2 leading-tight normal-case">
