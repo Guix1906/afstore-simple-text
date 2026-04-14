@@ -53,6 +53,7 @@ const normalizeConfig = (value?: Partial<AppConfig> | null): AppConfig => {
     ? value.heroImageUrls
         .map((url) => String(url || '').trim())
         .filter((url) => url.length > 0)
+        .slice(0, 2)
         .map((url) => withImageVersion(url, version))
     : [];
 
@@ -71,6 +72,7 @@ const normalizeConfig = (value?: Partial<AppConfig> | null): AppConfig => {
         : (configData.heroImageUrls || [])
             .map((url) => String(url || '').trim())
             .filter((url) => url.length > 0)
+            .slice(0, 2)
             .map((url) => withImageVersion(url, version)),
     updatedAt: version,
   };
@@ -142,7 +144,7 @@ export const configService = {
         whatsapp_number: normalized.whatsappNumber,
         whatsapp_message: normalized.whatsappMessage,
         hero_image_url: stripImageVersion(normalized.heroImageUrl || ''),
-        hero_image_urls: (normalized.heroImageUrls || []).map(stripImageVersion),
+        hero_image_urls: (normalized.heroImageUrls || []).slice(0, 2).map(stripImageVersion),
       };
 
       const { data: existing } = await withTimeout(
