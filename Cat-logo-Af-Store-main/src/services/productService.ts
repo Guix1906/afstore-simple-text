@@ -112,19 +112,6 @@ const sanitizePayload = (p: Partial<Product>) => ({
   tags: p.tags,
 });
 
-const fetchProductsByIds = async (ids: string[]) => {
-  if (!ids.length) return [] as Product[];
-
-  const { data, error } = await executeWithRetry<any[]>(() =>
-    supabase.from('products').select(PRODUCT_LIST_FIELDS).in('id', ids)
-  );
-
-  if (error || !data) return [];
-
-  const mapById = new Map(data.map((item) => [String(item.id), mapProduct(item)]));
-  return ids.map((id) => mapById.get(String(id))).filter(Boolean) as Product[];
-};
-
 const withTimeout = async <T>(promise: Promise<T>, timeoutMs = 3500): Promise<T> => {
   let timeoutId: number | undefined;
 
@@ -169,41 +156,27 @@ const isAbortedRequest = (error: any) => {
 
 export const productService = {
   async getAllActiveProducts(): Promise<Product[]> {
-    const pageSize = DB_PAGE_SIZE;
-    let page = 0;
-    const allProducts: Product[] = [];
+    const { data, error } = await executeWithRetry<any[]>(() =>
+      supabase
+        .from('products')
+        .select(PRODUCT_LIST_FIELDS)
+        .eq('active', true)
+        .order('created_at', { ascending: false })
+        .limit(200)
+    );
 
-    while (true) {
-      const from = page * pageSize;
-      const to = from + pageSize - 1;
-
-      const { data: idRows, error } = await executeWithRetry<any[]>(() =>
-        supabase
-          .from('products')
-          .select('id')
-          .eq('active', true)
-          .range(from, to)
-      );
-
-      if (error || !idRows) {
-        if (isAbortedRequest(error)) {
-          return allProducts;
-        }
-        return (localProducts as any[])
-          .map(mapProduct)
-          .filter((p) => p.active)
-          .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
-      }
-
-      const ids = idRows.map((row) => String(row.id));
-      const mapped = await fetchProductsByIds(ids);
-      allProducts.push(...mapped);
-
-      if (ids.length < pageSize) break;
-      page += 1;
+    if (!error && data && data.length > 0) {
+      return data.map(mapProduct);
     }
 
-    return allProducts;
+    if (isAbortedRequest(error)) {
+      return [];
+    }
+
+    return (localProducts as any[])
+      .map(mapProduct)
+      .filter((p) => p.active)
+      .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
   },
 
   async getActiveProducts(page = 0, limit = PAGE_SIZE_FALLBACK): Promise<Product[]> {
@@ -211,37 +184,29 @@ export const productService = {
     const from = safePage * safeLimit;
     const to = from + safeLimit - 1;
 
-    try {
-      const { data: idRows, error } = await executeWithRetry<any[]>(() =>
-        supabase
-          .from('products')
-          .select('id')
-          .eq('active', true)
-          .range(from, to)
-      );
-      
-      if (!error && idRows) {
-        const ids = idRows.map((row) => String(row.id));
-        return fetchProductsByIds(ids);
-      }
+    const { data, error } = await executeWithRetry<any[]>(() =>
+      supabase
+        .from('products')
+        .select(PRODUCT_LIST_FIELDS)
+        .eq('active', true)
+        .order('created_at', { ascending: false })
+        .range(from, to)
+    );
 
-      if (isAbortedRequest(error)) {
-        return [];
-      }
-      
-      // Fallback para local apenas se houver algo e o cloud falhar
-      const mapped = (localProducts as any[])
-        .map(mapProduct)
-        .filter((p) => p.active);
-
-      return paginate(mapped, safePage, safeLimit);
-    } catch (err) {
-      const mapped = (localProducts as any[])
-        .map(mapProduct)
-        .filter((p) => p.active);
-
-      return paginate(mapped, safePage, safeLimit);
+    if (!error && data && data.length > 0) {
+      return data.map(mapProduct);
     }
+
+    if (isAbortedRequest(error)) {
+      return [];
+    }
+
+    const mapped = (localProducts as any[])
+      .map(mapProduct)
+      .filter((p) => p.active)
+      .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
+
+    return paginate(mapped, safePage, safeLimit);
   },
 
   async getProducts(page = 0, limit = PAGE_SIZE_FALLBACK): Promise<Product[]> {
