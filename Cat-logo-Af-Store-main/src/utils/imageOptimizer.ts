@@ -62,7 +62,11 @@ const normalizeAppHostedStaticUrl = (url: string) => {
     const isImagePath = /\.(jpe?g|png|webp|avif|svg)(\?.*)?$/i.test(`${parsed.pathname}${parsed.search}`);
 
     if (isLovableHost && isImagePath) {
-      return `${parsed.pathname}${parsed.search}`;
+      const relativePath = `${parsed.pathname}${parsed.search}`;
+      if (isLegacyCatalogPath(relativePath)) {
+        return toStoragePublicUrl(relativePath);
+      }
+      return relativePath;
     }
 
     return normalized;
