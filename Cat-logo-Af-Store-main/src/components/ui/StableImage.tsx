@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { ImgHTMLAttributes, useMemo, useState } from 'react';
 
-interface StableImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface StableImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   fallbackSrc: string;
   showSkeleton?: boolean;
 }
