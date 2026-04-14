@@ -128,6 +128,12 @@ const executeWithRetry = async <T>(
   return { data: null as T | null, error: lastError };
 };
 
+const isAbortedRequest = (error: any) => {
+  const message = String(error?.message || '').toLowerCase();
+  const code = String(error?.code || '').toLowerCase();
+  return message.includes('aborted') || code.includes('aborted');
+};
+
 export const productService = {
   async getAllActiveProducts(): Promise<Product[]> {
     const pageSize = DB_PAGE_SIZE;
@@ -147,6 +153,9 @@ export const productService = {
       );
 
       if (error || !data) {
+        if (isAbortedRequest(error)) {
+          return allProducts;
+        }
         return (localProducts as any[])
           .map(mapProduct)
           .filter((p) => p.active)
@@ -180,6 +189,10 @@ export const productService = {
       if (!error && data) {
         return data.map(mapProduct);
       }
+
+      if (isAbortedRequest(error)) {
+        return [];
+      }
       
       // Fallback para local apenas se houver algo e o cloud falhar
       const mapped = (localProducts as any[])
@@ -208,6 +221,10 @@ export const productService = {
         .range(from, to)
     );
 
+    if (isAbortedRequest(error)) {
+      return [];
+    }
+
     if (error || !data || data.length === 0) {
       const mapped = (localProducts as any[]).map(mapProduct);
       return paginate(mapped, safePage, safeLimit);
@@ -219,6 +236,11 @@ export const productService = {
     const { data, error } = await executeWithRetry<any>(() =>
       supabase.from('products').select(PRODUCT_DETAIL_FIELDS).eq('id', id).maybeSingle()
     );
+
+    if (isAbortedRequest(error)) {
+      return undefined;
+    }
+
     if (error || !data) {
       const mapped = (localProducts as any[]).map(mapProduct);
       return mapped.find((p) => p.id === String(id));
@@ -266,6 +288,10 @@ export const productService = {
         .range(from, to)
     );
 
+    if (isAbortedRequest(error)) {
+      return [];
+    }
+
     if (error || !data || data.length === 0) {
       const mapped = (localProducts as any[])
         .map(mapProduct)
@@ -286,6 +312,10 @@ export const productService = {
         .eq('is_new', true)
         .limit(DB_PAGE_SIZE)
     );
+
+    if (isAbortedRequest(error)) {
+      return [];
+    }
     
     if (error || !data || data.length === 0) {
       return (localProducts as any[])
@@ -305,6 +335,10 @@ export const productService = {
         .eq('active', true)
         .or(`name.ilike.%${q}%,category.ilike.%${q}%,description.ilike.%${q}%`)
     );
+
+    if (isAbortedRequest(error)) {
+      return [];
+    }
     if (error || !data || data.length === 0) {
       return (localProducts as any[]).filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)).map(mapProduct);
     }
