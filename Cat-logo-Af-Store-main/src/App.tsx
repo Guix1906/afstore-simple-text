@@ -71,7 +71,6 @@ const CategoriesPage = createRetryableLazy(() => import('./pages/CategoriesPage'
 const NotFoundPage = createRetryableLazy(() => import('./pages/NotFoundPage'), 'not-found-page');
 
 // Admin Pages
-const AdminLogin = createRetryableLazy(() => import('./pages/admin/AdminLogin'), 'admin-login');
 const AdminDashboard = createRetryableLazy(() => import('./pages/admin/AdminDashboard'), 'admin-dashboard');
 const AdminProductForm = createRetryableLazy(() => import('./pages/admin/AdminProductForm'), 'admin-product-form');
 
@@ -100,7 +99,7 @@ function AnimatedRoutes() {
       <Route path="/novidades" element={<Suspense fallback={<PageFallback />}><NewArrivalsPage /></Suspense>} />
       <Route path="/categorias" element={<Suspense fallback={<PageFallback />}><CategoriesPage /></Suspense>} />
       {/* Admin Routes */}
-      <Route path="/admin" element={<Suspense fallback={<PageFallback />}><AdminLogin /></Suspense>} />
+      <Route path="/admin" element={<Suspense fallback={<PageFallback />}><AdminDashboard /></Suspense>} />
       <Route path="/admin/dashboard" element={<Suspense fallback={<PageFallback />}><AdminDashboard /></Suspense>} />
       <Route path="/admin/produto/novo" element={<Suspense fallback={<PageFallback />}><AdminProductForm /></Suspense>} />
       <Route path="/admin/produto/editar/:id" element={<Suspense fallback={<PageFallback />}><AdminProductForm /></Suspense>} />
