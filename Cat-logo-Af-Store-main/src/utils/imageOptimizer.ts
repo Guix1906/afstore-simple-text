@@ -3,37 +3,96 @@
  * Adiciona parâmetros de largura e formato WebP automaticamente.
  */
 export const DEFAULT_IMAGE_FALLBACK = '/af-logo.jpeg';
+const IMAGE_QUALITY = 75;
+const MOBILE_MAX_WIDTH = 800;
+const TABLET_MAX_WIDTH = 1200;
+const DESKTOP_MAX_WIDTH = 1600;
 
 const cleanImageUrl = (url: string) => String(url || '').trim();
+
+const isSupabaseStorageImage = (url: string) =>
+  url.includes('supabase.co') && url.includes('storage/v1/object/public');
+
+const appendTransformParams = (
+  url: string,
+  params: { width: number; quality: number; format: 'webp' | 'avif' }
+) => {
+  if (!isSupabaseStorageImage(url)) return url;
+
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}width=${params.width}&quality=${params.quality}&format=${params.format}`;
+};
+
+const clampResponsiveWidth = (width: number) => {
+  if (typeof window === 'undefined') return Math.min(width, DESKTOP_MAX_WIDTH);
+  if (window.innerWidth <= 768) return Math.min(width, MOBILE_MAX_WIDTH);
+  if (window.innerWidth <= 1024) return Math.min(width, TABLET_MAX_WIDTH);
+  return Math.min(width, DESKTOP_MAX_WIDTH);
+};
 
 export const getOptimizedImage = (url: string, width = 600) => {
   const normalizedUrl = cleanImageUrl(url);
   if (!normalizedUrl) return DEFAULT_IMAGE_FALLBACK;
 
-  const targetWidth =
-    typeof window !== 'undefined' && window.innerWidth < 768
-      ? Math.min(width, 720)
-      : width;
+  const targetWidth = clampResponsiveWidth(width);
 
   if (normalizedUrl.startsWith('data:') || normalizedUrl.startsWith('blob:')) {
     return normalizedUrl;
   }
-  
-  // Se for uma imagem do Supabase (contém storage/v1/object/public)
-  if (
-    normalizedUrl.includes('supabase.co') &&
-    normalizedUrl.includes('storage/v1/object/public') &&
-    !normalizedUrl.includes('width=')
-  ) {
-    // Adiciona parâmetros de transformação do Supabase
-    const separator = normalizedUrl.includes('?') ? '&' : '?';
-    return `${normalizedUrl}${separator}width=${targetWidth}&quality=80&format=webp`;
+
+  if (isSupabaseStorageImage(normalizedUrl) && !normalizedUrl.includes('width=')) {
+    return appendTransformParams(normalizedUrl, {
+      width: targetWidth,
+      quality: IMAGE_QUALITY,
+      format: 'webp',
+    });
   }
-  
+
   return normalizedUrl;
+};
+
+export const getResponsiveImageSources = (url: string) => {
+  const normalizedUrl = cleanImageUrl(url);
+  if (!normalizedUrl || normalizedUrl.startsWith('data:') || normalizedUrl.startsWith('blob:')) {
+    return {
+      src: normalizedUrl || DEFAULT_IMAGE_FALLBACK,
+      webpSrcSet: '',
+      avifSrcSet: '',
+    };
+  }
+
+  if (!isSupabaseStorageImage(normalizedUrl)) {
+    return {
+      src: normalizedUrl,
+      webpSrcSet: '',
+      avifSrcSet: '',
+    };
+  }
+
+  const widths = [MOBILE_MAX_WIDTH, TABLET_MAX_WIDTH, DESKTOP_MAX_WIDTH];
+
+  const buildSrcSet = (format: 'webp' | 'avif') =>
+    widths
+      .map((width) => `${appendTransformParams(normalizedUrl, { width, quality: IMAGE_QUALITY, format })} ${width}w`)
+      .join(', ');
+
+  return {
+    src: appendTransformParams(normalizedUrl, {
+      width: clampResponsiveWidth(DESKTOP_MAX_WIDTH),
+      quality: IMAGE_QUALITY,
+      format: 'webp',
+    }),
+    webpSrcSet: buildSrcSet('webp'),
+    avifSrcSet: buildSrcSet('avif'),
+  };
 };
 
 export const getProductImageOrFallback = (images?: string[], width = 600) => {
   const firstImage = Array.isArray(images) ? images.find((img) => Boolean(String(img || '').trim())) : '';
   return getOptimizedImage(firstImage || DEFAULT_IMAGE_FALLBACK, width);
+};
+
+export const getProductImageSources = (images?: string[]) => {
+  const firstImage = Array.isArray(images) ? images.find((img) => Boolean(String(img || '').trim())) : '';
+  return getResponsiveImageSources(firstImage || DEFAULT_IMAGE_FALLBACK);
 };
