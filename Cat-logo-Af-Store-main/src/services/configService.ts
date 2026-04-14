@@ -1,8 +1,9 @@
 import { AppConfig } from '../types';
 import { supabase } from '../integrations/supabase/client';
 import configData from '../data/config.json';
+import { withImageVersion } from '../utils/imageOptimizer';
 
-const CONFIG_FIELDS = 'id, whatsapp_number, whatsapp_message, hero_image_url, hero_image_urls';
+const CONFIG_FIELDS = 'id, whatsapp_number, whatsapp_message, hero_image_url, hero_image_urls, updated_at';
 const CONFIG_CACHE_KEY = 'af-cache:app-config';
 
 const safeStorage = {
@@ -47,13 +48,15 @@ const isTransientNetworkError = (error: unknown) => {
 };
 
 const normalizeConfig = (value?: Partial<AppConfig> | null): AppConfig => {
+  const version = String(value?.updatedAt || Date.now());
   const normalizedHeroImageUrls = Array.isArray(value?.heroImageUrls)
     ? value.heroImageUrls
         .map((url) => String(url || '').trim())
         .filter((url) => url.length > 0)
+        .map((url) => withImageVersion(url, version))
     : [];
 
-  const normalizedHeroImageUrl = String(value?.heroImageUrl || '').trim();
+  const normalizedHeroImageUrl = withImageVersion(String(value?.heroImageUrl || '').trim(), version);
 
   return {
     whatsappNumber: String(value?.whatsappNumber || configData.whatsappNumber || ''),
@@ -67,8 +70,23 @@ const normalizeConfig = (value?: Partial<AppConfig> | null): AppConfig => {
         ? normalizedHeroImageUrls
         : (configData.heroImageUrls || [])
             .map((url) => String(url || '').trim())
-            .filter((url) => url.length > 0),
+            .filter((url) => url.length > 0)
+            .map((url) => withImageVersion(url, version)),
+    updatedAt: version,
   };
+};
+
+const stripImageVersion = (url: string) => {
+  const normalized = String(url || '').trim();
+  if (!normalized) return '';
+
+  try {
+    const parsed = new URL(normalized, typeof window !== 'undefined' ? window.location.origin : 'https://localhost');
+    parsed.searchParams.delete('updatedAt');
+    return parsed.toString();
+  } catch {
+    return normalized.replace(/([?&])updatedAt=[^&#]*/g, '').replace(/[?&]$/, '');
+  }
 };
 
 export const configService = {
@@ -87,13 +105,14 @@ export const configService = {
           whatsappMessage: data.whatsapp_message,
           heroImageUrl: (data as any).hero_image_url,
           heroImageUrls: (data as any).hero_image_urls,
+          updatedAt: (data as any).updated_at,
         });
         safeStorage.set(CONFIG_CACHE_KEY, normalized);
         return normalized;
       }
 
       if (error) {
-        if (error) console.warn('Using fallback config due to database error:', error);
+        console.warn('Using fallback config due to database error:', error);
       }
 
       const cached = safeStorage.get(CONFIG_CACHE_KEY);
@@ -115,15 +134,15 @@ export const configService = {
   },
 
   async updateConfig(config: AppConfig): Promise<void> {
-    const normalized = normalizeConfig(config);
+    const normalized = normalizeConfig({ ...config, updatedAt: Date.now().toString() });
     safeStorage.set(CONFIG_CACHE_KEY, normalized);
 
     try {
       const payload = {
         whatsapp_number: normalized.whatsappNumber,
         whatsapp_message: normalized.whatsappMessage,
-        hero_image_url: normalized.heroImageUrl,
-        hero_image_urls: normalized.heroImageUrls,
+        hero_image_url: stripImageVersion(normalized.heroImageUrl || ''),
+        hero_image_urls: (normalized.heroImageUrls || []).map(stripImageVersion),
       };
 
       const { data: existing } = await withTimeout(
