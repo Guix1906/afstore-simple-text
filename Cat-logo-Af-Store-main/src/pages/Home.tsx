@@ -4,24 +4,21 @@ import HeroBanner from '../components/home/HeroBanner';
 import CategoryTabs from '../components/layout/CategoryTabs';
 import ProductSection from '../components/home/ProductSection';
 import WhatsAppBanner from '../components/home/WhatsAppBanner';
-import { useActiveProducts, useNewArrivals, QUERY_KEYS } from '../hooks/useOptimizedQueries';
+import { useAllActiveProducts, QUERY_KEYS } from '../hooks/useOptimizedQueries';
 import { SectionSkeleton, HeroSkeleton } from '../components/layout/Skeletons';
 import { useQueryClient } from '@tanstack/react-query';
 import { productService } from '../services/productService';
 
 export default function Home() {
   const queryClient = useQueryClient();
-  const { data: products, isLoading: productsLoading } = useActiveProducts(0, 20);
-  const { data: newArrivals = [], isLoading: newLoading } = useNewArrivals();
-
-  const isLoading = productsLoading || newLoading;
+  const { data: products = [], isLoading } = useAllActiveProducts();
 
   const sections = useMemo(() => {
     if (!products || products.length === 0) {
       return {
         catalog: [],
         bestSellers: [],
-        newArrivals: newArrivals.slice(0, 6),
+          newArrivals: [],
         onSale: [],
       };
     }
@@ -29,10 +26,10 @@ export default function Home() {
     return {
       catalog: products.slice(0, 8),
       bestSellers: products.filter(p => p.isBestSeller).slice(0, 4),
-      newArrivals: newArrivals.slice(0, 6),
+        newArrivals: products,
       onSale: products.filter(p => p.isOnSale).slice(0, 4)
     };
-  }, [products, newArrivals]);
+  }, [products]);
 
 
   // Prefetch de categorias comuns para navegação ultra-rápida (Native Feel)
@@ -75,7 +72,6 @@ export default function Home() {
                 title="Novidades" 
                 products={sections.newArrivals} 
                 layout="grid"
-                viewAllLink="/novidades"
               />
             )}
 
