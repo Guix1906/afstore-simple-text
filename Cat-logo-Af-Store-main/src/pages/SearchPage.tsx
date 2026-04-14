@@ -4,14 +4,16 @@ import ProductCard from '../components/product/ProductCard';
 import SearchBar from '../components/ui/SearchBar';
 import { CATEGORIES } from '../constants';
 import { useActiveProducts, useSearchProducts } from '../hooks/useOptimizedQueries';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useStore } from '../store/useStore';
 import { Link } from 'react-router-dom';
 import { SectionSkeleton } from '../components/layout/Skeletons';
 
 export default function SearchPage() {
   const { searchQuery } = useStore();
+  const debouncedSearchQuery = useDebouncedValue(searchQuery.trim(), 300);
   
-  const { data: searchResults, isLoading: isLoadingSearch } = useSearchProducts(searchQuery);
+  const { data: searchResults, isLoading: isLoadingSearch } = useSearchProducts(debouncedSearchQuery);
   const { data: activeProducts, isLoading: isLoadingHighlights } = useActiveProducts(0, 4);
 
   const highlights = activeProducts || [];
@@ -22,7 +24,7 @@ export default function SearchPage() {
       <div className="p-4 space-y-6 pt-20">
         <SearchBar />
 
-        {searchQuery ? (
+        {searchQuery.trim() ? (
           <div className="space-y-6">
             <h2 className="text-xs font-bold uppercase tracking-widest text-brand-text-muted">
               {isLoadingSearch ? 'Buscando...' : `${results.length} Resultados para "${searchQuery}"`}
