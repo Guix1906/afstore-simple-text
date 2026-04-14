@@ -4,6 +4,7 @@ import localProducts from '../data/products.json';
 
 const PAGE_SIZE_FALLBACK = 12;
 const DB_PAGE_SIZE = 24;
+const ACTIVE_PRODUCTS_CACHE_KEY = 'af-cache:active-products';
 const PRODUCT_LIST_FIELDS = `
   id,
   name,
@@ -52,6 +53,24 @@ const paginate = <T,>(items: T[], page = 0, limit = PAGE_SIZE_FALLBACK) => {
   const { safePage, safeLimit } = normalizePagination(page, limit);
   const start = safePage * safeLimit;
   return items.slice(start, start + safeLimit);
+};
+
+const safeStorage = {
+  get(key: string) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  },
+  set(key: string, value: unknown) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // noop
+    }
+  },
 };
 
 const toSlug = (value: string) =>
@@ -130,7 +149,7 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs = 3500): Promise<T>
 
 const executeWithRetry = async <T>(
   queryFn: () => Promise<{ data: T | null; error: any }>,
-  retries = 1
+  retries = 0
 ) => {
   let lastError: any = null;
 
@@ -154,6 +173,17 @@ const isAbortedRequest = (error: any) => {
   return message.includes('aborted') || code.includes('aborted');
 };
 
+const getCachedActiveProducts = () => {
+  const cached = safeStorage.get(ACTIVE_PRODUCTS_CACHE_KEY);
+  return Array.isArray(cached) ? cached.map(mapProduct) : [];
+};
+
+const getLocalActiveProducts = () =>
+  (localProducts as any[])
+    .map(mapProduct)
+    .filter((p) => p.active)
+    .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
+
 export const productService = {
   async getAllActiveProducts(): Promise<Product[]> {
     const { data, error } = await executeWithRetry<any[]>(() =>
@@ -166,17 +196,19 @@ export const productService = {
     );
 
     if (!error && data && data.length > 0) {
-      return data.map(mapProduct);
+      const mapped = data.map(mapProduct);
+      safeStorage.set(ACTIVE_PRODUCTS_CACHE_KEY, mapped);
+      return mapped;
     }
 
     if (isAbortedRequest(error)) {
       return [];
     }
 
-    return (localProducts as any[])
-      .map(mapProduct)
-      .filter((p) => p.active)
-      .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
+    const cached = getCachedActiveProducts();
+    if (cached.length > 0) return cached;
+
+    return getLocalActiveProducts();
   },
 
   async getActiveProducts(page = 0, limit = PAGE_SIZE_FALLBACK): Promise<Product[]> {
@@ -194,17 +226,21 @@ export const productService = {
     );
 
     if (!error && data && data.length > 0) {
-      return data.map(mapProduct);
+      const mapped = data.map(mapProduct);
+      safeStorage.set(ACTIVE_PRODUCTS_CACHE_KEY, mapped);
+      return mapped;
     }
 
     if (isAbortedRequest(error)) {
       return [];
     }
 
-    const mapped = (localProducts as any[])
-      .map(mapProduct)
-      .filter((p) => p.active)
-      .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
+    const cached = getCachedActiveProducts();
+    if (cached.length > 0) {
+      return paginate(cached, safePage, safeLimit);
+    }
+
+    const mapped = getLocalActiveProducts();
 
     return paginate(mapped, safePage, safeLimit);
   },
