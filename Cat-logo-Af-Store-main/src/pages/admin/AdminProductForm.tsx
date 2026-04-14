@@ -198,28 +198,28 @@ export default function AdminProductForm() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] animate-pulse">
-        <header className="px-6 h-20 bg-[#0F0F0F] border-b border-white/5 flex items-center justify-between">
-          <div className="h-10 w-48 bg-[#181818] rounded-full" />
-          <div className="h-10 w-32 bg-[#181818] rounded-xl" />
+      <div className="min-h-screen bg-brand-bg animate-pulse">
+        <header className="px-6 h-20 bg-brand-bg border-b border-brand-border flex items-center justify-between">
+          <div className="h-10 w-48 bg-brand-card rounded-full" />
+          <div className="h-10 w-32 bg-brand-card rounded-xl" />
         </header>
         <main className="max-w-4xl mx-auto px-6 pt-10 grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-2 h-[600px] bg-[#181818] rounded-3xl" />
-          <div className="h-[400px] bg-[#181818] rounded-3xl" />
+          <div className="md:col-span-2 h-[600px] bg-brand-card rounded-2xl" />
+          <div className="h-[400px] bg-brand-card rounded-2xl" />
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-[#E5E5E5] font-sans pb-24">
-      <header className="sticky top-0 z-50 px-4 md:px-6 h-20 flex items-center justify-between bg-[#0F0F0F]/80 backdrop-blur-xl border-b border-white/5">
+    <div className="min-h-screen bg-brand-bg text-brand-text font-sans pb-16">
+      <header className="sticky top-0 z-50 px-4 md:px-6 h-20 flex items-center justify-between bg-brand-bg/90 backdrop-blur border-b border-brand-border">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/admin/dashboard')} className="w-10 h-10 flex items-center justify-center text-[#888] hover:text-white bg-[#181818] border border-white/5 hover:border-white/20 rounded-full transition-all">
+          <button onClick={() => navigate('/admin/dashboard')} className="w-10 h-10 flex items-center justify-center text-brand-text-muted hover:text-brand-text bg-brand-card border border-brand-border rounded-full transition-colors">
             <ChevronLeft size={18} />
           </button>
           <div className="min-w-0">
-            <h1 className="text-white font-serif italic text-base md:text-lg truncate">{id ? 'Editar Peça' : 'Nova Peça'}</h1>
+            <h1 className="text-brand-text font-serif italic text-base md:text-lg truncate">{id ? 'Editar Peça' : 'Nova Peça'}</h1>
             <p className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-widest text-brand-gold">Antigravity Admin</p>
           </div>
         </div>
@@ -235,47 +235,47 @@ export default function AdminProductForm() {
       </header>
 
 
-      <main className="max-w-4xl mx-auto px-6 pt-10">
+      <main className="max-w-4xl mx-auto px-6 pt-8">
         <div className="grid md:grid-cols-3 gap-8">
           
           {/* Main Info Column */}
           <div className="md:col-span-2 space-y-8">
-            <section className="bg-[#181818] border border-white/5 rounded-3xl p-8 space-y-6">
-              <h2 className="text-sm font-bold text-white tracking-wide border-b border-white/5 pb-4">Informações Essenciais</h2>
+            <section className="bg-brand-card border border-brand-border rounded-2xl p-6 space-y-6">
+              <h2 className="text-sm font-bold text-brand-text tracking-wide border-b border-brand-border pb-4">Informações Essenciais</h2>
               
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Nome da Peça</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted ml-1">Nome da Peça</label>
                 <input 
                   type="text" 
                   value={formData.name}
                   onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all placeholder:text-white/20"
+                    className="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-4 text-sm text-brand-text focus:border-brand-gold outline-none transition-all placeholder:text-brand-text-muted/50"
                   placeholder="Ex: Legging Empina Bumbum Premium"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Preço Atual (R$)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted ml-1">Preço Atual (R$)</label>
                   <input 
                     type="number" 
                     step="0.01"
                     min="0"
                     value={formData.price || ''}
                     onChange={e => setFormData({...formData, price: Number(e.target.value)})}
-                    className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:border-brand-gold outline-none transition-all placeholder:text-white/20"
+                    className="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-4 text-sm text-brand-text focus:border-brand-gold outline-none transition-all placeholder:text-brand-text-muted/50"
                     placeholder="99.90"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Preço Antigo <span className="opacity-50">(R$, Opcional)</span></label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted ml-1">Preço Antigo <span className="opacity-60">(R$, Opcional)</span></label>
                   <input 
                     type="number" 
                     step="0.01"
                     min="0"
                     value={formData.originalPrice || ''}
                     onChange={e => setFormData({...formData, originalPrice: e.target.value ? Number(e.target.value) : undefined})}
-                    className="w-full bg-[#121212] border border-dashed border-white/10 rounded-xl px-4 py-4 text-sm text-[#888] focus:text-white focus:border-white/30 outline-none transition-all placeholder:text-white/20"
+                    className="w-full bg-brand-bg border border-dashed border-brand-border rounded-xl px-4 py-4 text-sm text-brand-text-muted focus:text-brand-text focus:border-brand-gold outline-none transition-all placeholder:text-brand-text-muted/50"
                     placeholder="129.90"
                   />
                 </div>
@@ -283,11 +283,11 @@ export default function AdminProductForm() {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Categoria</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted ml-1">Categoria</label>
                   <select 
                     value={formData.category}
                     onChange={e => setFormData({...formData, category: e.target.value})}
-                    className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:border-brand-gold outline-none appearance-none cursor-pointer"
+                    className="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-4 text-sm text-brand-text focus:border-brand-gold outline-none appearance-none cursor-pointer"
                   >
                     {categoryOptions.map((slug) => (
                        <option key={slug} value={slug}>{slug}</option>
@@ -298,23 +298,23 @@ export default function AdminProductForm() {
                       value={customCategory}
                       onChange={(e) => setCustomCategory(e.target.value)}
                       placeholder="Nova categoria"
-                      className="w-full bg-[#121212] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-gold outline-none"
+                      className="w-full bg-brand-bg border border-brand-border rounded-xl px-3 py-2 text-xs text-brand-text focus:border-brand-gold outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleAddCategory}
-                      className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold uppercase tracking-wider"
+                      className="px-3 py-2 rounded-xl bg-brand-bg border border-brand-border hover:bg-brand-card text-xs font-bold uppercase tracking-wider"
                     >
                       Adicionar
                     </button>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Gênero</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted ml-1">Gênero</label>
                   <select 
                     value={formData.gender}
                     onChange={e => setFormData({...formData, gender: e.target.value})}
-                    className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:border-white/30 outline-none appearance-none cursor-pointer"
+                    className="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-4 text-sm text-brand-text focus:border-brand-gold outline-none appearance-none cursor-pointer"
                   >
                     <option value="feminino">Feminino</option>
                     <option value="masculino">Masculino</option>
@@ -324,8 +324,8 @@ export default function AdminProductForm() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Tamanhos Disponíveis</label>
-                <div className="flex flex-wrap gap-3 p-4 bg-[#121212] rounded-xl border border-white/5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted ml-1">Tamanhos Disponíveis</label>
+                  <div className="flex flex-wrap gap-3 p-4 bg-brand-bg rounded-xl border border-brand-border">
                   {['P', 'M', 'G', 'GG', 'XG', 'Único'].map(sz => {
                     const selected = formData.sizes?.includes(sz);
                     return (
@@ -333,7 +333,7 @@ export default function AdminProductForm() {
                         key={sz} 
                         type="button"
                         onClick={() => toggleSize(sz)}
-                        className={`w-10 h-10 rounded-md font-bold text-[10px] transition-all flex items-center justify-center ${selected ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20 scale-105' : 'bg-transparent text-[#888] hover:text-white border border-white/10 hover:border-white/30'}`}
+                        className={`w-10 h-10 rounded-md font-bold text-[10px] transition-all flex items-center justify-center ${selected ? 'bg-brand-gold text-brand-primary-foreground shadow-lg shadow-brand-gold/20 scale-105' : 'bg-transparent text-brand-text-muted hover:text-brand-text border border-brand-border hover:border-brand-gold/40'}`}
                       >
                         {sz}
                       </button>
@@ -343,16 +343,16 @@ export default function AdminProductForm() {
               </div>
             </section>
 
-            <section className="bg-[#181818] border border-white/5 rounded-3xl p-8 space-y-4">
-               <h2 className="text-sm font-bold text-white tracking-wide border-b border-white/5 pb-4">Apresentação</h2>
+            <section className="bg-brand-card border border-brand-border rounded-2xl p-6 space-y-4">
+               <h2 className="text-sm font-bold text-brand-text tracking-wide border-b border-brand-border pb-4">Apresentação</h2>
                
                <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Descrição Comercial</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted ml-1">Descrição Comercial</label>
                 <textarea 
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})}
                   rows={5}
-                  className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:border-brand-gold outline-none resize-none leading-relaxed placeholder:text-white/20"
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-4 text-sm text-brand-text focus:border-brand-gold outline-none resize-none leading-relaxed placeholder:text-brand-text-muted/50"
                   placeholder="Conte sobre o tecido, caimento, uso indicado..."
                 />
               </div>
@@ -362,25 +362,25 @@ export default function AdminProductForm() {
           {/* Right Column / Media */}
           <div className="space-y-8">
             
-            <section className="bg-[#181818] border border-white/5 rounded-3xl p-6 space-y-6">
-               <h2 className="text-sm font-bold text-white tracking-wide border-b border-white/5 pb-4">Fotos</h2>
+             <section className="bg-brand-card border border-brand-border rounded-2xl p-6 space-y-6">
+                <h2 className="text-sm font-bold text-brand-text tracking-wide border-b border-brand-border pb-4">Fotos</h2>
                
                <div 
-                  className={`w-full aspect-square border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-3 transition-colors text-center p-6 ${dragActive ? 'border-brand-gold bg-brand-gold/5' : 'border-white/10 hover:border-brand-gold/50 bg-[#121212]'}`}
+                   className={`w-full aspect-square border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-3 transition-colors text-center p-6 ${dragActive ? 'border-brand-gold bg-brand-gold/5' : 'border-brand-border hover:border-brand-gold/50 bg-brand-bg'}`}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
                   onDragOver={handleDrag}
                   onDrop={handleDrop}
                >
-                 <UploadCloud size={32} className="text-[#888]" />
+                 <UploadCloud size={32} className="text-brand-text-muted" />
                  <div>
-                   <p className="text-xs font-medium text-white">Arraste fotos aqui</p>
-                   <p className="text-[9px] uppercase tracking-widest text-[#888] mt-1">ou</p>
+                   <p className="text-xs font-medium text-brand-text">Arraste fotos aqui</p>
+                   <p className="text-[9px] uppercase tracking-widest text-brand-text-muted mt-1">ou</p>
                  </div>
                  <button 
                    type="button" 
                    onClick={() => fileInputRef.current?.click()}
-                   className="text-[10px] uppercase tracking-widest font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg text-white"
+                    className="text-[10px] uppercase tracking-widest font-bold bg-brand-card border border-brand-border hover:bg-brand-bg px-4 py-2 rounded-lg text-brand-text"
                  >
                    Procurar arquivo
                  </button>
@@ -402,13 +402,13 @@ export default function AdminProductForm() {
                            loading="lazy"
                            decoding="async"
                          />
-                        <div className="absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-black/80 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-brand-bg/80 to-transparent" />
                         {i === 0 && (
-                           <div className="absolute top-2 left-2 bg-brand-gold text-black text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded">Capa</div>
+                           <div className="absolute top-2 left-2 bg-brand-gold text-brand-primary-foreground text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded">Capa</div>
                         )}
                         <button 
                           onClick={() => handleRemoveImage(i)}
-                          className="absolute bottom-2 right-2 p-2 bg-white/10 hover:bg-red-500/80 backdrop-blur text-white rounded-full transition-colors"
+                          className="absolute bottom-2 right-2 p-2 bg-brand-card/80 hover:bg-brand-danger backdrop-blur text-brand-text rounded-full transition-colors"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -418,39 +418,39 @@ export default function AdminProductForm() {
                )}
             </section>
 
-            <section className="bg-[#181818] border border-white/5 rounded-3xl p-6 space-y-4">
-               <h2 className="text-sm font-bold text-white tracking-wide border-b border-white/5 pb-4">Tráfego & Destaques</h2>
+             <section className="bg-brand-card border border-brand-border rounded-2xl p-6 space-y-4">
+                <h2 className="text-sm font-bold text-brand-text tracking-wide border-b border-brand-border pb-4">Tráfego & Destaques</h2>
                
                <div className="space-y-3">
-                 <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.active ? 'bg-green-500/5 border-green-500/20' : 'bg-transparent border-white/5 opacity-60'}`}>
-                   <input type="checkbox" checked={formData.active} onChange={e => setFormData({...formData, active: e.target.checked})} className="w-4 h-4 accent-green-500" />
+                  <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.active ? 'bg-brand-gold/10 border-brand-gold/30' : 'bg-transparent border-brand-border opacity-70'}`}>
+                    <input type="checkbox" checked={formData.active} onChange={e => setFormData({...formData, active: e.target.checked})} className="w-4 h-4 accent-brand-gold" />
                    <div>
-                     <span className="block text-[11px] font-bold uppercase tracking-widest text-white">Ativo na Loja</span>
-                     <span className="block text-[9px] text-[#888] mt-0.5">Visível para clientes</span>
+                      <span className="block text-[11px] font-bold uppercase tracking-widest text-brand-text">Ativo na Loja</span>
+                      <span className="block text-[9px] text-brand-text-muted mt-0.5">Visível para clientes</span>
                    </div>
                  </label>
 
-                 <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isBestSeller ? 'bg-brand-gold/5 border-brand-gold/20' : 'bg-transparent border-white/5 opacity-60'}`}>
+                  <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isBestSeller ? 'bg-brand-gold/10 border-brand-gold/30' : 'bg-transparent border-brand-border opacity-70'}`}>
                    <input type="checkbox" checked={formData.isBestSeller} onChange={e => setFormData({...formData, isBestSeller: e.target.checked})} className="w-4 h-4 accent-brand-gold" />
                    <div>
-                     <span className="block text-[11px] font-bold uppercase tracking-widest text-[#FFD700]">Mais Vendido</span>
-                     <span className="block text-[9px] text-[#888] mt-0.5">Ganhe destaque no menu</span>
+                      <span className="block text-[11px] font-bold uppercase tracking-widest text-brand-gold">Mais Vendido</span>
+                      <span className="block text-[9px] text-brand-text-muted mt-0.5">Ganhe destaque no menu</span>
                    </div>
                  </label>
 
-                 <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isNew ? 'bg-brand-gold/5 border-brand-gold/20' : 'bg-transparent border-white/5 opacity-60'}`}>
+                  <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isNew ? 'bg-brand-gold/10 border-brand-gold/30' : 'bg-transparent border-brand-border opacity-70'}`}>
                    <input type="checkbox" checked={formData.isNew} onChange={e => setFormData({...formData, isNew: e.target.checked})} className="w-4 h-4 accent-brand-gold" />
                    <div>
                      <span className="block text-[11px] font-bold uppercase tracking-widest text-brand-gold">Novidade</span>
-                     <span className="block text-[9px] text-[#888] mt-0.5">Aparece na aba Novidades</span>
+                      <span className="block text-[9px] text-brand-text-muted mt-0.5">Aparece na aba Novidades</span>
                    </div>
                  </label>
 
-                 <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isOnSale ? 'bg-red-500/5 border-red-500/20' : 'bg-transparent border-white/5 opacity-60'}`}>
-                   <input type="checkbox" checked={formData.isOnSale} onChange={e => setFormData({...formData, isOnSale: e.target.checked})} className="w-4 h-4 accent-red-500" />
+                  <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isOnSale ? 'bg-brand-danger/10 border-brand-danger/30' : 'bg-transparent border-brand-border opacity-70'}`}>
+                    <input type="checkbox" checked={formData.isOnSale} onChange={e => setFormData({...formData, isOnSale: e.target.checked})} className="w-4 h-4 accent-brand-danger" />
                    <div>
-                     <span className="block text-[11px] font-bold uppercase tracking-widest text-white">Oferta Extra</span>
-                     <span className="block text-[9px] text-[#888] mt-0.5">Aparece na aba Promoções</span>
+                      <span className="block text-[11px] font-bold uppercase tracking-widest text-brand-text">Oferta Extra</span>
+                      <span className="block text-[9px] text-brand-text-muted mt-0.5">Aparece na aba Promoções</span>
                    </div>
                  </label>
                </div>
@@ -460,8 +460,8 @@ export default function AdminProductForm() {
         </div>
 
         {error && (
-            <div className="mt-8 bg-red-500/10 border border-red-500/30 p-4 rounded-xl text-center">
-              <span className="text-sm font-semibold text-red-400">{error}</span>
+            <div className="mt-8 bg-brand-danger/10 border border-brand-danger/30 p-4 rounded-xl text-center">
+              <span className="text-sm font-semibold text-brand-danger">{error}</span>
             </div>
         )}
       </main>
