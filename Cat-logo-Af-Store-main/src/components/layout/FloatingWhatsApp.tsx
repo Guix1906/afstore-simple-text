@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { configService } from '../../services/configService';
 import { useConfig } from '../../hooks/useOptimizedQueries';
 
 export default function FloatingWhatsApp() {

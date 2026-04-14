@@ -1,8 +1,9 @@
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 
 interface PageWrapperProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function PageWrapper({ children }: PageWrapperProps) {
