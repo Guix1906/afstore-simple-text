@@ -123,14 +123,6 @@ const HeroBanner = memo(function HeroBanner() {
     return () => window.clearTimeout(timeoutId);
   }, [slides]);
 
-  if (isLoading) {
-    return (
-      <div className="relative h-[65vh] w-full bg-brand-card/30 animate-pulse flex items-center justify-center rounded-b-[3rem] overflow-hidden">
-        <div className="w-8 h-8 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   const activeSlideIndex = current % slides.length;
   const activeSlide = slides[activeSlideIndex];
   const shouldPrioritizeImage = activeSlideIndex === 0;
