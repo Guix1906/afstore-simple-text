@@ -56,31 +56,33 @@ export default function NewArrivalsPage() {
       ) : (
         <>
           {displayProducts.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 pb-24">
-              {displayProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-
-            {hasNextPage && (
-              <div className="px-4 pb-24 flex justify-center">
-                <button
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  className="btn-primary !px-8 disabled:opacity-60"
-                >
-                  {isFetchingNextPage ? 'Carregando mais...' : 'Carregar mais'}
-                </button>
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 pb-24">
+                {displayProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
               </div>
-            )}
 
-            {!hasNextPage && displayProducts.length > 0 && isFetching && (
-              <div className="px-4 pb-20 text-center">
-                <span className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-white/60">
-                  Atualizando catálogo...
-                </span>
-              </div>
-            )}
+              {hasNextPage && (
+                <div className="px-4 pb-24 flex justify-center">
+                  <button
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="btn-primary !px-8 disabled:opacity-60"
+                  >
+                    {isFetchingNextPage ? 'Carregando mais...' : 'Carregar mais'}
+                  </button>
+                </div>
+              )}
+
+              {!hasNextPage && displayProducts.length > 0 && isFetching && (
+                <div className="px-4 pb-20 text-center">
+                  <span className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-white/60">
+                    Atualizando catálogo...
+                  </span>
+                </div>
+              )}
+            </>
           ) : (
             <div className="py-24 text-center px-10 space-y-6">
               <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto">
