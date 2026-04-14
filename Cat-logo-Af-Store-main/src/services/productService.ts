@@ -5,7 +5,23 @@ import localProducts from '../data/products.json';
 const PAGE_SIZE_FALLBACK = 12;
 const DB_PAGE_SIZE = 24;
 const QUERY_TIMEOUT_MS = 2800;
-const PRODUCT_SELECT_FIELDS = `
+const PRODUCT_LIST_FIELDS = `
+  id,
+  name,
+  slug,
+  category,
+  price,
+  original_price,
+  discount,
+  images,
+  is_new,
+  is_best_seller,
+  is_on_sale,
+  active,
+  created_at
+`;
+
+const PRODUCT_DETAIL_FIELDS = `
   id,
   name,
   slug,
@@ -153,9 +169,8 @@ export const productService = {
       const { data, error } = await executeWithRetry<any[]>((signal) =>
         supabase
           .from('products')
-          .select(PRODUCT_SELECT_FIELDS)
+          .select(PRODUCT_LIST_FIELDS)
           .eq('active', true)
-          .order('created_at', { ascending: false })
           .abortSignal(signal)
           .range(from, to)
       );
@@ -186,9 +201,8 @@ export const productService = {
       const { data, error } = await executeWithRetry<any[]>((signal) =>
         supabase
           .from('products')
-          .select(PRODUCT_SELECT_FIELDS)
+          .select(PRODUCT_LIST_FIELDS)
           .eq('active', true)
-          .order('created_at', { ascending: false })
           .abortSignal(signal)
           .range(from, to)
       );
@@ -220,8 +234,7 @@ export const productService = {
     const { data, error } = await executeWithRetry<any[]>((signal) =>
       supabase
         .from('products')
-        .select(PRODUCT_SELECT_FIELDS)
-        .order('created_at', { ascending: false })
+        .select(PRODUCT_LIST_FIELDS)
         .abortSignal(signal)
         .range(from, to)
     );
@@ -235,7 +248,7 @@ export const productService = {
 
   async getProductById(id: string): Promise<Product | undefined> {
     const { data, error } = await executeWithRetry<any>((signal) =>
-      supabase.from('products').select(PRODUCT_SELECT_FIELDS).eq('id', id).abortSignal(signal).maybeSingle()
+      supabase.from('products').select(PRODUCT_DETAIL_FIELDS).eq('id', id).abortSignal(signal).maybeSingle()
     );
     if (error || !data) {
       const mapped = (localProducts as any[]).map(mapProduct);
@@ -278,10 +291,9 @@ export const productService = {
     const { data, error } = await executeWithRetry<any[]>((signal) =>
       supabase
         .from('products')
-        .select(PRODUCT_SELECT_FIELDS)
+        .select(PRODUCT_LIST_FIELDS)
         .eq('active', true)
         .eq('category', category)
-        .order('created_at', { ascending: false })
         .abortSignal(signal)
         .range(from, to)
     );
@@ -301,22 +313,14 @@ export const productService = {
     const { data, error } = await executeWithRetry<any[]>((signal) =>
       supabase
         .from('products')
-        .select(PRODUCT_SELECT_FIELDS)
+        .select(PRODUCT_LIST_FIELDS)
         .eq('active', true)
         .eq('is_new', true)
-        .order('created_at', { ascending: false })
         .abortSignal(signal)
         .limit(DB_PAGE_SIZE)
     );
     
     if (error || !data || data.length === 0) {
-      // Fallback robusto: retorna todo o catálogo ativo, sem limitar a 10
-      const allActiveData = await this.getAllActiveProducts();
-      
-      if (allActiveData && allActiveData.length > 0) {
-        return allActiveData;
-      }
-
       return (localProducts as any[])
         .map(mapProduct)
         .filter((p) => p.active)
@@ -330,7 +334,7 @@ export const productService = {
     const { data, error } = await executeWithRetry<any[]>((signal) =>
       supabase
         .from('products')
-        .select(PRODUCT_SELECT_FIELDS)
+        .select(PRODUCT_LIST_FIELDS)
         .eq('active', true)
         .abortSignal(signal)
         .or(`name.ilike.%${q}%,category.ilike.%${q}%,description.ilike.%${q}%`)
