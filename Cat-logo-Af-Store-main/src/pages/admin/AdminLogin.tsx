@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../../components/layout/PageWrapper';
 import { Lock } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
+import { adminAuthService } from '../../services/adminAuthService';
+import { useAdminSession } from '../../hooks/useAdminSession';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -12,6 +14,14 @@ export default function AdminLogin() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { isReady, session, isAdmin } = useAdminSession();
+
+  React.useEffect(() => {
+    if (!isReady) return;
+    if (session?.user && isAdmin) {
+      navigate('/admin/dashboard');
+    }
+  }, [isAdmin, isReady, navigate, session]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +55,13 @@ export default function AdminLogin() {
         });
 
         if (signInError) throw signInError;
+
+        const { isAdmin: hasAdminRole, error: adminError } = await adminAuthService.isAdmin();
+        if (!hasAdminRole) {
+          await adminAuthService.signOut();
+          throw new Error(adminError || 'Seu usuário não possui permissão de administrador.');
+        }
+
         navigate('/admin/dashboard');
       }
     } catch (err) {
@@ -88,14 +105,6 @@ export default function AdminLogin() {
       setLoading(false);
     }
   };
-
-  React.useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) navigate('/admin/dashboard');
-    };
-    checkSession();
-  }, [navigate]);
 
   return (
     <PageWrapper>
@@ -145,10 +154,10 @@ export default function AdminLogin() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isReady}
               className="btn-primary w-full py-5 flex items-center justify-center gap-2 group shadow-xl"
             >
-              {loading ? (
+              {loading || !isReady ? (
                 <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
               ) : (
                 isRegisterMode ? 'Criar Acesso' : 'Autenticar'

@@ -124,6 +124,8 @@ export const useProductMutations = () => {
     mutationFn: (product: Partial<Product>) => productService.createProduct(product),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
     },
   });
 
@@ -132,6 +134,8 @@ export const useProductMutations = () => {
       productService.updateProduct(id, product),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.product(variables.id) });
     },
   });
@@ -140,6 +144,8 @@ export const useProductMutations = () => {
     mutationFn: (id: string) => productService.deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
     },
   });
 
@@ -148,6 +154,8 @@ export const useProductMutations = () => {
       productService.toggleProductActive(id, active),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
     },
   });
 
