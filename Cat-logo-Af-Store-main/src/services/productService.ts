@@ -2,6 +2,20 @@ import { supabase } from '../integrations/supabase/client';
 import { Product } from '../types';
 import localProducts from '../data/products.json';
 
+const PAGE_SIZE_FALLBACK = 12;
+
+const normalizePagination = (page = 0, limit = PAGE_SIZE_FALLBACK) => {
+  const safePage = Number.isFinite(page) && page >= 0 ? Math.floor(page) : 0;
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : PAGE_SIZE_FALLBACK;
+  return { safePage, safeLimit };
+};
+
+const paginate = <T,>(items: T[], page = 0, limit = PAGE_SIZE_FALLBACK) => {
+  const { safePage, safeLimit } = normalizePagination(page, limit);
+  const start = safePage * safeLimit;
+  return items.slice(start, start + safeLimit);
+};
+
 // Função ultra-segura de conversão
 const mapProduct = (p: any): Product => ({
   id: String(p.id),
@@ -46,29 +60,52 @@ const sanitizePayload = (p: Partial<Product>) => ({
 });
 
 export const productService = {
-  async getActiveProducts(): Promise<Product[]> {
+  async getActiveProducts(page = 0, limit = PAGE_SIZE_FALLBACK): Promise<Product[]> {
+    const { safePage, safeLimit } = normalizePagination(page, limit);
+    const from = safePage * safeLimit;
+    const to = from + safeLimit - 1;
+
     try {
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .eq('active', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, to);
       
       if (!error && data) {
         return data.map(mapProduct);
       }
       
       // Fallback para local apenas se houver algo e o cloud falhar
-      return (localProducts as any[]).map(mapProduct);
+      const mapped = (localProducts as any[])
+        .map(mapProduct)
+        .filter((p) => p.active);
+
+      return paginate(mapped, safePage, safeLimit);
     } catch (err) {
-      return (localProducts as any[]).map(mapProduct);
+      const mapped = (localProducts as any[])
+        .map(mapProduct)
+        .filter((p) => p.active);
+
+      return paginate(mapped, safePage, safeLimit);
     }
   },
 
-  async getProducts(): Promise<Product[]> {
-    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+  async getProducts(page = 0, limit = PAGE_SIZE_FALLBACK): Promise<Product[]> {
+    const { safePage, safeLimit } = normalizePagination(page, limit);
+    const from = safePage * safeLimit;
+    const to = from + safeLimit - 1;
+
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
     if (error || !data || data.length === 0) {
-      return (localProducts as any[]).map(mapProduct);
+      const mapped = (localProducts as any[]).map(mapProduct);
+      return paginate(mapped, safePage, safeLimit);
     }
     return data.map(mapProduct);
   },
@@ -76,7 +113,8 @@ export const productService = {
   async getProductById(id: string): Promise<Product | undefined> {
     const { data, error } = await supabase.from('products').select('*').eq('id', id).maybeSingle();
     if (error || !data) {
-      return (localProducts as any[]).find(p => p.id === id);
+      const mapped = (localProducts as any[]).map(mapProduct);
+      return mapped.find((p) => p.id === String(id));
     }
     return mapProduct(data);
   },
@@ -100,11 +138,27 @@ export const productService = {
     await supabase.from('products').delete().eq('id', id);
   },
 
-  async getProductsByCategory(category: string): Promise<Product[]> {
-    const { data, error } = await supabase.from('products').select('*').eq('active', true).eq('category', category);
+  async getProductsByCategory(category: string, page = 0, limit = PAGE_SIZE_FALLBACK): Promise<Product[]> {
+    const { safePage, safeLimit } = normalizePagination(page, limit);
+    const from = safePage * safeLimit;
+    const to = from + safeLimit - 1;
+
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('active', true)
+      .eq('category', category)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
     if (error || !data || data.length === 0) {
-      return (localProducts as any[]).filter(p => p.category === category).map(mapProduct);
+      const mapped = (localProducts as any[])
+        .map(mapProduct)
+        .filter((p) => p.active && p.category === category);
+
+      return paginate(mapped, safePage, safeLimit);
     }
+
     return data.map(mapProduct);
   },
 

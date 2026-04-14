@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { productService } from '../services/productService';
 import { configService } from '../services/configService';
 import { Product } from '../types';
@@ -26,6 +26,8 @@ export const useProducts = (page = 0, limit = 20) => {
     queryKey: [...QUERY_KEYS.products, { page, limit }],
     queryFn: () => productService.getProducts(page, limit),
     staleTime: DEFAULT_STALE_TIME,
+    placeholderData: keepPreviousData,
+    retry: 2,
   });
 };
 
@@ -39,6 +41,7 @@ export const useInfiniteActiveProducts = (limit = DEFAULT_PAGE_SIZE, enabled = t
     },
     enabled,
     staleTime: DEFAULT_STALE_TIME,
+    retry: 2,
   });
 };
 
@@ -53,6 +56,7 @@ export const useInfiniteProductsByCategory = (category: string, limit = DEFAULT_
     },
     enabled: !!category,
     staleTime: 1000 * 60 * 5,
+    retry: 2,
   });
 };
 
@@ -61,6 +65,8 @@ export const useActiveProducts = (page = 0, limit = DEFAULT_PAGE_SIZE) => {
     queryKey: [...QUERY_KEYS.activeProducts, { page, limit }],
     queryFn: () => productService.getActiveProducts(page, limit),
     staleTime: DEFAULT_STALE_TIME,
+    placeholderData: keepPreviousData,
+    retry: 2,
   });
 };
 
@@ -78,6 +84,8 @@ export const useProductsByCategory = (category: string, page = 0, limit = DEFAUL
     queryFn: () => productService.getProductsByCategory(category, page, limit),
     enabled: !!category,
     staleTime: DEFAULT_STALE_TIME,
+    placeholderData: keepPreviousData,
+    retry: 2,
   });
 };
 
@@ -87,6 +95,7 @@ export const useProduct = (id: string) => {
     queryFn: () => productService.getProductById(id),
     enabled: !!id,
     staleTime: 1000 * 60 * 10, // Cache product details longer
+    retry: 2,
   });
 };
 

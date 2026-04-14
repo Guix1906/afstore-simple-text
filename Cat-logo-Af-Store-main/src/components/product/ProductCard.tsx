@@ -2,7 +2,8 @@ import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../../types';
 import PriceDisplay from '../ui/PriceDisplay';
-import { getOptimizedImage } from '../../utils/imageOptimizer';
+import StableImage from '../ui/StableImage';
+import { DEFAULT_IMAGE_FALLBACK, getProductImageOrFallback } from '../../utils/imageOptimizer';
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../hooks/useOptimizedQueries';
 import { productService } from '../../services/productService';
@@ -39,12 +40,15 @@ const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
     >
       {/* Image Block */}
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-brand-card border border-brand-border/40">
-        <img
-          src={getOptimizedImage(product.images[0], 500)}
+        <StableImage
+          src={getProductImageOrFallback(product.images, 500)}
+          fallbackSrc={DEFAULT_IMAGE_FALLBACK}
           alt={product.name}
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
           referrerPolicy="no-referrer"
+          decoding="async"
+          fetchPriority="low"
         />
 
         {/* Badges - Simplified for mobile performance */}
@@ -55,7 +59,7 @@ const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
           {product.isOnSale && (
-            <span className="bg-red-500 text-white text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-sm shadow-lg">
+            <span className="bg-brand-danger text-brand-text text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-sm shadow-lg">
               SALE
             </span>
           )}
