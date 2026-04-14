@@ -5,7 +5,7 @@ import { withImageVersion } from '../utils/imageOptimizer';
 
 const PAGE_SIZE_FALLBACK = 12;
 const DB_PAGE_SIZE = 24;
-const ACTIVE_PRODUCTS_CACHE_KEY = 'af-cache:active-products';
+const ACTIVE_PRODUCTS_CACHE_KEY = 'af-cache:active-products:v2';
 const PRODUCT_LIST_FIELDS = `
   id,
   name,
