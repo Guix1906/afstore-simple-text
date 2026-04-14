@@ -10,6 +10,20 @@ const DESKTOP_MAX_WIDTH = 1600;
 
 const cleanImageUrl = (url: string) => String(url || '').trim();
 
+const isLocalStaticImage = (url: string) => /^\/[^?]+/.test(url);
+
+const toLocalWebpUrl = (url: string) => {
+  if (!isLocalStaticImage(url)) return '';
+
+  const match = url.match(/^([^?#]+)([?#].*)?$/);
+  if (!match) return '';
+
+  const [, pathname, suffix = ''] = match;
+  if (!/\.(jpe?g|png)$/i.test(pathname)) return '';
+
+  return `${pathname.replace(/\.(jpe?g|png)$/i, '.webp')}${suffix}`;
+};
+
 const isSupabaseStorageImage = (url: string) =>
   url.includes('supabase.co') && url.includes('storage/v1/object/public');
 
@@ -70,9 +84,10 @@ export const getResponsiveImageSources = (url: string) => {
   }
 
   if (!isSupabaseStorageImage(normalizedUrl)) {
+    const localWebp = toLocalWebpUrl(normalizedUrl);
     return {
       src: normalizedUrl,
-      webpSrcSet: '',
+      webpSrcSet: localWebp,
       avifSrcSet: '',
     };
   }
