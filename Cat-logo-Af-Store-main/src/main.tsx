@@ -42,13 +42,7 @@ if (typeof window !== 'undefined') {
     recoverFromChunkError(reason);
   });
 
-  if (!isPreviewHost && !isInIframe && 'serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {
-        // Silencia erro de registro para não impactar UX
-      });
-    });
-  } else if ('serviceWorker' in navigator) {
+  if ((isPreviewHost || isInIframe) && 'serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
       registrations.forEach((registration) => {
         void registration.unregister();
