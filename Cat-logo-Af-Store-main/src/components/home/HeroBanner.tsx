@@ -11,14 +11,14 @@ const DEFAULT_SLIDES = [
     id: 'd1',
     title: "Coleção — Serenity",
     subtitle: "Conforto e leveza para o seu dia",
-    image: "/af-logo.jpeg",
+    image: getResponsiveImageSources('/af-logo.jpeg'),
     link: "/categoria/feminino"
   },
   {
     id: 'd2',
     title: "Linha — Violet",
     subtitle: "Estilo técnico com atitude",
-    image: "/af-logo.jpeg",
+    image: getResponsiveImageSources('/af-logo.jpeg'),
     link: "/categoria/feminino"
   }
 ];
