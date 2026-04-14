@@ -14,9 +14,19 @@ export default function PageWrapper({ children }: PageWrapperProps) {
     setReduceMotion(media.matches);
 
     const onChange = (event: MediaQueryListEvent) => setReduceMotion(event.matches);
-    media.addEventListener('change', onChange);
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', onChange);
+    } else {
+      media.addListener(onChange);
+    }
 
-    return () => media.removeEventListener('change', onChange);
+    return () => {
+      if (typeof media.removeEventListener === 'function') {
+        media.removeEventListener('change', onChange);
+      } else {
+        media.removeListener(onChange);
+      }
+    };
   }, []);
 
   return (
