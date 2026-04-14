@@ -97,7 +97,11 @@ const mapProduct = (p: any): Product => ({
   price: Number(p.price || 0),
   originalPrice: p.original_price || p.originalPrice || undefined,
   discount: p.discount || undefined,
-  images: Array.isArray(p.images) ? p.images : [],
+  images: Array.isArray(p.images)
+    ? p.images
+        .map((img: unknown) => String(img || '').trim())
+        .filter((img: string) => img.length > 0)
+    : [],
   sizes: Array.isArray(p.sizes) ? p.sizes : ['P', 'M', 'G'],
   colors: Array.isArray(p.colors) ? p.colors : [],
   description: p.description || '',

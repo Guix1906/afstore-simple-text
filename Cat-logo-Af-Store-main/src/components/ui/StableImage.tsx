@@ -59,7 +59,7 @@ export default function StableImage({
   }, [imgProps.loading, isVisible]);
 
   const resolvedSrc = useMemo(() => {
-    if (!isVisible) return '';
+    if (!isVisible) return null;
     if (!src || isFallback) return fallbackSrc;
 
     if (retryCount === 0) return src;
@@ -77,7 +77,7 @@ export default function StableImage({
         <img
           {...imgProps}
           ref={imgRef}
-          src={resolvedSrc}
+          src={resolvedSrc ?? undefined}
           sizes={imgSizes}
           alt={alt}
           className={className}
