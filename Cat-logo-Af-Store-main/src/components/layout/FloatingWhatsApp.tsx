@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { configService } from '../../services/configService';
+import { useConfig } from '../../hooks/useOptimizedQueries';
 
 export default function FloatingWhatsApp() {
   const [visible, setVisible] = useState(false);
+  const { data: config } = useConfig();
 
   useEffect(() => {
     const onScroll = () => {
@@ -20,9 +21,9 @@ export default function FloatingWhatsApp() {
     const popup = window.open('about:blank', '_blank', 'noopener,noreferrer');
 
     try {
-      const rawNumber = '99985530617';
+      const rawNumber = config?.whatsappNumber || '99985530617';
       const phone = rawNumber.startsWith('55') ? rawNumber : `55${rawNumber}`;
-      const customMessage = 'Olá! Vim pelo catálogo da AF STORE 🛍️\nPode me ajudar?';
+      const customMessage = config?.whatsappMessage || 'Olá! Vim pelo catálogo da AF STORE 🛍️\nPode me ajudar?';
       const whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(customMessage)}`;
 
       if (popup) {
