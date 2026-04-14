@@ -14,141 +14,16 @@ export type Database = {
   }
   public: {
     Tables: {
-      app_config: {
-        Row: {
-          created_at: string
-          hero_image_url: string | null
-          hero_image_urls: Json | null
-          id: string
-          updated_at: string
-          whatsapp_message: string
-          whatsapp_number: string
-        }
-        Insert: {
-          created_at?: string
-          hero_image_url?: string | null
-          hero_image_urls?: Json | null
-          id?: string
-          updated_at?: string
-          whatsapp_message: string
-          whatsapp_number: string
-        }
-        Update: {
-          created_at?: string
-          hero_image_url?: string | null
-          hero_image_urls?: Json | null
-          id?: string
-          updated_at?: string
-          whatsapp_message?: string
-          whatsapp_number?: string
-        }
-        Relationships: []
-      }
-      products: {
-        Row: {
-          active: boolean
-          category: string
-          colors: Json
-          created_at: string
-          description: string | null
-          discount: number | null
-          gender: string | null
-          id: string
-          images: Json
-          is_best_seller: boolean
-          is_new: boolean
-          is_on_sale: boolean
-          measurements: string | null
-          name: string
-          original_price: number | null
-          price: number
-          sizes: string[]
-          slug: string
-          tags: string[]
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          category: string
-          colors?: Json
-          created_at?: string
-          description?: string | null
-          discount?: number | null
-          gender?: string | null
-          id?: string
-          images?: Json
-          is_best_seller?: boolean
-          is_new?: boolean
-          is_on_sale?: boolean
-          measurements?: string | null
-          name: string
-          original_price?: number | null
-          price: number
-          sizes?: string[]
-          slug: string
-          tags?: string[]
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          category?: string
-          colors?: Json
-          created_at?: string
-          description?: string | null
-          discount?: number | null
-          gender?: string | null
-          id?: string
-          images?: Json
-          is_best_seller?: boolean
-          is_new?: boolean
-          is_on_sale?: boolean
-          measurements?: string | null
-          name?: string
-          original_price?: number | null
-          price?: number
-          sizes?: string[]
-          slug?: string
-          tags?: string[]
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -275,8 +150,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "moderator", "user"],
-    },
+    Enums: {},
   },
 } as const
