@@ -123,7 +123,13 @@ export default function AdminDashboard() {
     navigate('/admin');
   };
 
-  if (!authChecked) return null;
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-bg">
+        <div className="w-8 h-8 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#0A0A0A] text-[#E5E5E5]">

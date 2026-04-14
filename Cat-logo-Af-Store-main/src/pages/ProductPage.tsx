@@ -39,7 +39,7 @@ export default function ProductPage() {
     return categoryProducts.filter((item) => item.id !== product.id).slice(0, 4);
   }, [categoryProducts, product]);
 
-  if (isLoadingProduct || !product) {
+  if (isLoadingProduct) {
     return (
       <PageWrapper>
         <div className="sticky top-0 z-50 px-4 h-20 flex items-center justify-between bg-brand-bg/95 border-b border-brand-border/50">
@@ -50,6 +50,22 @@ export default function ProductPage() {
           <div className="w-10" />
         </div>
         <div className="aspect-[4/5] bg-brand-card/30 animate-pulse w-full max-w-lg mx-auto" />
+      </PageWrapper>
+    );
+  }
+
+  if (!product) {
+    return (
+      <PageWrapper>
+        <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 text-center gap-6">
+          <h1 className="text-3xl font-serif font-bold text-brand-text uppercase tracking-tight">Produto não encontrado</h1>
+          <p className="text-sm text-brand-text-muted max-w-md">
+            Este produto não está mais disponível ou foi removido.
+          </p>
+          <button onClick={() => navigate('/')} className="btn-primary">
+            Voltar para a loja
+          </button>
+        </div>
       </PageWrapper>
     );
   }
