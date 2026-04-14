@@ -4,7 +4,6 @@ import localProducts from '../data/products.json';
 
 const PAGE_SIZE_FALLBACK = 12;
 const DB_PAGE_SIZE = 24;
-const QUERY_TIMEOUT_MS = 2800;
 const PRODUCT_LIST_FIELDS = `
   id,
   name,
@@ -113,44 +112,17 @@ const sanitizePayload = (p: Partial<Product>) => ({
   tags: p.tags,
 });
 
-const isTimeoutError = (error: any) => {
-  const code = error?.code;
-  return code === '57014' || code === 'CLIENT_TIMEOUT' || error?.name === 'AbortError';
-};
-
 const executeWithRetry = async <T>(
-  queryFn: (signal: AbortSignal) => Promise<{ data: T | null; error: any }>,
-  retries = 1,
-  timeoutMs = QUERY_TIMEOUT_MS
+  queryFn: () => Promise<{ data: T | null; error: any }>,
+  retries = 1
 ) => {
   let lastError: any = null;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-    let data: T | null = null;
-    let error: any = null;
-
-    try {
-      const result = await queryFn(controller.signal);
-      data = result.data;
-      error = result.error;
-    } catch (err) {
-      error =
-        err instanceof Error && err.name === 'AbortError'
-          ? { code: 'CLIENT_TIMEOUT', message: 'A consulta demorou demais e foi cancelada.' }
-          : err;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    const { data, error } = await queryFn();
 
     if (!error && data) return { data, error: null };
     lastError = error;
-
-    if (isTimeoutError(error)) {
-      break;
-    }
   }
 
   return { data: null as T | null, error: lastError };
@@ -166,12 +138,11 @@ export const productService = {
       const from = page * pageSize;
       const to = from + pageSize - 1;
 
-      const { data, error } = await executeWithRetry<any[]>((signal) =>
+      const { data, error } = await executeWithRetry<any[]>(() =>
         supabase
           .from('products')
           .select(PRODUCT_LIST_FIELDS)
           .eq('active', true)
-          .abortSignal(signal)
           .range(from, to)
       );
 
@@ -198,12 +169,11 @@ export const productService = {
     const to = from + safeLimit - 1;
 
     try {
-      const { data, error } = await executeWithRetry<any[]>((signal) =>
+      const { data, error } = await executeWithRetry<any[]>(() =>
         supabase
           .from('products')
           .select(PRODUCT_LIST_FIELDS)
           .eq('active', true)
-          .abortSignal(signal)
           .range(from, to)
       );
       
@@ -231,11 +201,10 @@ export const productService = {
     const from = safePage * safeLimit;
     const to = from + safeLimit - 1;
 
-    const { data, error } = await executeWithRetry<any[]>((signal) =>
+    const { data, error } = await executeWithRetry<any[]>(() =>
       supabase
         .from('products')
         .select(PRODUCT_LIST_FIELDS)
-        .abortSignal(signal)
         .range(from, to)
     );
 
@@ -247,8 +216,8 @@ export const productService = {
   },
 
   async getProductById(id: string): Promise<Product | undefined> {
-    const { data, error } = await executeWithRetry<any>((signal) =>
-      supabase.from('products').select(PRODUCT_DETAIL_FIELDS).eq('id', id).abortSignal(signal).maybeSingle()
+    const { data, error } = await executeWithRetry<any>(() =>
+      supabase.from('products').select(PRODUCT_DETAIL_FIELDS).eq('id', id).maybeSingle()
     );
     if (error || !data) {
       const mapped = (localProducts as any[]).map(mapProduct);
@@ -288,13 +257,12 @@ export const productService = {
     const from = safePage * safeLimit;
     const to = from + safeLimit - 1;
 
-    const { data, error } = await executeWithRetry<any[]>((signal) =>
+    const { data, error } = await executeWithRetry<any[]>(() =>
       supabase
         .from('products')
         .select(PRODUCT_LIST_FIELDS)
         .eq('active', true)
         .eq('category', category)
-        .abortSignal(signal)
         .range(from, to)
     );
 
@@ -310,13 +278,12 @@ export const productService = {
   },
 
   async getNewArrivals(): Promise<Product[]> {
-    const { data, error } = await executeWithRetry<any[]>((signal) =>
+    const { data, error } = await executeWithRetry<any[]>(() =>
       supabase
         .from('products')
         .select(PRODUCT_LIST_FIELDS)
         .eq('active', true)
         .eq('is_new', true)
-        .abortSignal(signal)
         .limit(DB_PAGE_SIZE)
     );
     
@@ -331,12 +298,11 @@ export const productService = {
 
   async searchProducts(query: string): Promise<Product[]> {
     const q = query.toLowerCase();
-    const { data, error } = await executeWithRetry<any[]>((signal) =>
+    const { data, error } = await executeWithRetry<any[]>(() =>
       supabase
         .from('products')
         .select(PRODUCT_LIST_FIELDS)
         .eq('active', true)
-        .abortSignal(signal)
         .or(`name.ilike.%${q}%,category.ilike.%${q}%,description.ilike.%${q}%`)
     );
     if (error || !data || data.length === 0) {
