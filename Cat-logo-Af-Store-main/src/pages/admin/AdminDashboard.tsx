@@ -9,6 +9,7 @@ import { useAdminSession } from '../../hooks/useAdminSession';
 import { toast } from 'sonner';
 import StableImage from '../../components/ui/StableImage';
 import { DEFAULT_IMAGE_FALLBACK, getOptimizedImage } from '../../utils/imageOptimizer';
+import { storageService } from '../../services/storageService';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -81,17 +82,7 @@ export default function AdminDashboard() {
     if (!files.length) return;
 
     try {
-      const heroImageUrls = await Promise.all(
-        files.map(
-          (file) =>
-            new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(String(reader.result));
-              reader.onerror = () => reject(new Error('Falha ao ler imagens.'));
-              reader.readAsDataURL(file);
-            })
-        )
-      );
+      const heroImageUrls = await storageService.uploadBannerImages(files);
 
       await configService.updateConfig({
         ...config,
