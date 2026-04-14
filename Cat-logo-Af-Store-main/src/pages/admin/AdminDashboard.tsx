@@ -1,11 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProducts, useConfig, useProductMutations } from '../../hooks/useOptimizedQueries';
-import { adminAuthService } from '../../services/adminAuthService';
 import { configService } from '../../services/configService';
 import { Plus, Edit2, Trash2, Settings, LogOut, ExternalLink, Package, LayoutDashboard } from 'lucide-react';
 import { useEffect } from 'react';
-import { useAdminSession } from '../../hooks/useAdminSession';
 import { toast } from 'sonner';
 import StableImage from '../../components/ui/StableImage';
 import { DEFAULT_IMAGE_FALLBACK, getOptimizedImage } from '../../utils/imageOptimizer';
@@ -15,17 +13,9 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState('');
   const heroImageInputRef = useRef<HTMLInputElement | null>(null);
-  const { isReady, isAdmin } = useAdminSession();
-  const isAdminReady = isReady && isAdmin;
-
-  const { data: products = [], isLoading: isLoadingProducts } = useProducts(0, 500, isAdminReady);
-  const { data: config, isLoading: isLoadingConfig, refetch: refetchConfig } = useConfig(isAdminReady);
+  const { data: products = [], isLoading: isLoadingProducts } = useProducts(0, 500, true);
+  const { data: config, isLoading: isLoadingConfig, refetch: refetchConfig } = useConfig(true);
   const { toggleActive, deleteProduct } = useProductMutations();
-
-  useEffect(() => {
-    if (!isReady) return;
-    if (!isAdmin) navigate('/admin');
-  }, [isAdmin, isReady, navigate]);
 
   const handleToggleProduct = async (product: any) => {
     setActionError('');
@@ -120,17 +110,8 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = async () => {
-    await adminAuthService.signOut();
     navigate('/admin');
   };
-
-  if (!isReady || !isAdminReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-bg">
-        <div className="w-8 h-8 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#0A0A0A] text-[#E5E5E5]">

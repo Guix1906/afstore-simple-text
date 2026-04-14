@@ -6,7 +6,6 @@ import { ChevronLeft, Save, UploadCloud, Trash2 } from 'lucide-react';
 import { CATEGORIES } from '../../constants';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { useAdminSession } from '../../hooks/useAdminSession';
 import StableImage from '../../components/ui/StableImage';
 import { DEFAULT_IMAGE_FALLBACK, getOptimizedImage } from '../../utils/imageOptimizer';
 import { storageService } from '../../services/storageService';
@@ -29,7 +28,6 @@ export default function AdminProductForm() {
   const [dragActive, setDragActive] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const { isReady, isAdmin } = useAdminSession();
 
   const [formData, setFormData] = useState<Partial<Product>>({
     name: '',
@@ -48,13 +46,6 @@ export default function AdminProductForm() {
 
   useEffect(() => {
     const loadProduct = async () => {
-      if (!isReady) return;
-
-      if (!isAdmin) {
-        navigate('/admin');
-        return;
-      }
-      
       if (id) {
         try {
           const p = await productService.getProductById(id);
@@ -66,7 +57,7 @@ export default function AdminProductForm() {
       setLoading(false);
     };
     void loadProduct();
-  }, [id, isAdmin, isReady, navigate]);
+  }, [id]);
 
   const parsedForm = useMemo(
     () =>
@@ -205,7 +196,7 @@ export default function AdminProductForm() {
     });
   };
 
-  if (!isReady || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#0F0F0F] animate-pulse">
         <header className="px-6 h-20 bg-[#0F0F0F] border-b border-white/5 flex items-center justify-between">
