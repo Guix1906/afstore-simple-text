@@ -17,9 +17,17 @@ export default function Home() {
   const isLoading = productsLoading || newLoading;
 
   const sections = useMemo(() => {
-    if (!products || products.length === 0) return { bestSellers: [], newArrivals: newArrivals.slice(0, 6), onSale: [] };
+    if (!products || products.length === 0) {
+      return {
+        catalog: [],
+        bestSellers: [],
+        newArrivals: newArrivals.slice(0, 6),
+        onSale: [],
+      };
+    }
     
     return {
+      catalog: products.slice(0, 8),
       bestSellers: products.filter(p => p.isBestSeller).slice(0, 4),
       newArrivals: newArrivals.slice(0, 6),
       onSale: products.filter(p => p.isOnSale).slice(0, 4)
@@ -52,6 +60,15 @@ export default function Home() {
         ) : (
           <>
             <HeroBanner />
+
+            {sections.catalog.length > 0 && (
+              <ProductSection
+                title="Catálogo"
+                products={sections.catalog}
+                layout="grid"
+                viewAllLink="/novidades"
+              />
+            )}
             
             {sections.newArrivals.length > 0 && (
               <ProductSection 
