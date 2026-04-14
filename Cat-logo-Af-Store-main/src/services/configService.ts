@@ -4,7 +4,7 @@ import configData from '../data/config.json';
 import { withImageVersion } from '../utils/imageOptimizer';
 
 const CONFIG_FIELDS = 'id, whatsapp_number, whatsapp_message, hero_image_url, hero_image_urls, updated_at';
-const CONFIG_CACHE_KEY = 'af-cache:app-config';
+const CONFIG_CACHE_KEY = 'af-cache:app-config:v2';
 
 const safeStorage = {
   get(key: string) {
