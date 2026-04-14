@@ -28,16 +28,12 @@ export default function Home() {
   const sections = useMemo(() => {
     if (!products || products.length === 0) {
       return {
-        catalog: [],
-        bestSellers: [],
         newArrivals: [],
         onSale: [],
       };
     }
     
     return {
-      catalog: products,
-      bestSellers: products.filter(p => p.isBestSeller).slice(0, 4),
       newArrivals: products,
       onSale: products.filter(p => p.isOnSale).slice(0, 4)
     };
@@ -87,14 +83,6 @@ export default function Home() {
           <>
             <HeroBanner />
 
-            {sections.catalog.length > 0 && (
-              <ProductSection
-                title="Catálogo"
-                products={sections.catalog}
-                layout="grid"
-              />
-            )}
-            
             {sections.newArrivals.length > 0 && (
               <ProductSection 
                 title="Novidades" 
