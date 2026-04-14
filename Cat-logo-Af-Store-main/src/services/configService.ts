@@ -46,7 +46,7 @@ const isTransientNetworkError = (error: unknown) => {
   );
 };
 
-const normalizeConfig = (value?: Partial<AppConfig> | null): AppConfig => ({
+const normalizeConfig = (value?: Partial<AppConfig> | null): AppConfig => {
   const normalizedHeroImageUrls = Array.isArray(value?.heroImageUrls)
     ? value.heroImageUrls
         .map((url) => String(url || '').trim())
@@ -55,19 +55,21 @@ const normalizeConfig = (value?: Partial<AppConfig> | null): AppConfig => ({
 
   const normalizedHeroImageUrl = String(value?.heroImageUrl || '').trim();
 
-  whatsappNumber: String(value?.whatsappNumber || configData.whatsappNumber || ''),
-  whatsappMessage: String(value?.whatsappMessage || configData.whatsappMessage || ''),
-  heroImageUrl:
-    normalizedHeroImageUrl ||
-    normalizedHeroImageUrls[0] ||
-    String(configData.heroImageUrl || '').trim(),
-  heroImageUrls:
-    normalizedHeroImageUrls.length > 0
-      ? normalizedHeroImageUrls
-      : (configData.heroImageUrls || [])
-          .map((url) => String(url || '').trim())
-          .filter((url) => url.length > 0),
-});
+  return {
+    whatsappNumber: String(value?.whatsappNumber || configData.whatsappNumber || ''),
+    whatsappMessage: String(value?.whatsappMessage || configData.whatsappMessage || ''),
+    heroImageUrl:
+      normalizedHeroImageUrl ||
+      normalizedHeroImageUrls[0] ||
+      String(configData.heroImageUrl || '').trim(),
+    heroImageUrls:
+      normalizedHeroImageUrls.length > 0
+        ? normalizedHeroImageUrls
+        : (configData.heroImageUrls || [])
+            .map((url) => String(url || '').trim())
+            .filter((url) => url.length > 0),
+  };
+};
 
 export const configService = {
   async getConfig(): Promise<AppConfig> {
