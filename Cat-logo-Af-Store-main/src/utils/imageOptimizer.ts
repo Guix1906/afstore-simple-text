@@ -7,12 +7,35 @@ const IMAGE_QUALITY = 75;
 const MOBILE_MAX_WIDTH = 800;
 const TABLET_MAX_WIDTH = 1200;
 const DESKTOP_MAX_WIDTH = 1600;
+const CATALOG_BUCKET = 'catalog-images';
+const LEGACY_FOLDER = 'public/legacy';
+
+const isLegacyCatalogPath = (url: string) => {
+  if (!url.startsWith('/')) return false;
+  const decoded = decodeURIComponent(url.slice(1));
+  return /whatsapp image/i.test(decoded) && /\.(jpe?g|png|webp|avif)$/i.test(decoded);
+};
+
+const toStoragePublicUrl = (relativePath: string) => {
+  const baseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim();
+  if (!baseUrl) return relativePath;
+
+  const normalizedPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
+  return `${baseUrl}/storage/v1/object/public/${CATALOG_BUCKET}/${encodeURIComponent(`${LEGACY_FOLDER}/${normalizedPath}`)}`;
+};
 
 const cleanImageUrl = (url: string) => String(url || '').trim();
 
 const normalizeAppHostedStaticUrl = (url: string) => {
   const normalized = cleanImageUrl(url);
-  if (!normalized || normalized.startsWith('/') || normalized.startsWith('data:') || normalized.startsWith('blob:')) {
+  if (!normalized || normalized.startsWith('data:') || normalized.startsWith('blob:')) {
+    return normalized;
+  }
+
+  if (normalized.startsWith('/')) {
+    if (isLegacyCatalogPath(normalized)) {
+      return toStoragePublicUrl(decodeURIComponent(normalized));
+    }
     return normalized;
   }
 
