@@ -3,6 +3,28 @@ import { Product } from '../types';
 import localProducts from '../data/products.json';
 
 const PAGE_SIZE_FALLBACK = 12;
+const DB_PAGE_SIZE = 60;
+const PRODUCT_SELECT_FIELDS = `
+  id,
+  name,
+  slug,
+  category,
+  price,
+  original_price,
+  discount,
+  images,
+  sizes,
+  colors,
+  description,
+  measurements,
+  is_new,
+  is_best_seller,
+  is_on_sale,
+  active,
+  gender,
+  tags,
+  created_at
+`;
 
 const normalizePagination = (page = 0, limit = PAGE_SIZE_FALLBACK) => {
   const safePage = Number.isFinite(page) && page >= 0 ? Math.floor(page) : 0;
@@ -74,9 +96,21 @@ const sanitizePayload = (p: Partial<Product>) => ({
   tags: p.tags,
 });
 
+const executeWithRetry = async <T>(queryFn: () => Promise<{ data: T | null; error: any }>, retries = 2) => {
+  let lastError: any = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const { data, error } = await queryFn();
+    if (!error && data) return { data, error: null };
+    lastError = error;
+  }
+
+  return { data: null as T | null, error: lastError };
+};
+
 export const productService = {
   async getAllActiveProducts(): Promise<Product[]> {
-    const pageSize = 200;
+    const pageSize = DB_PAGE_SIZE;
     let page = 0;
     const allProducts: Product[] = [];
 
@@ -84,12 +118,14 @@ export const productService = {
       const from = page * pageSize;
       const to = from + pageSize - 1;
 
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('active', true)
-        .order('created_at', { ascending: false })
-        .range(from, to);
+      const { data, error } = await executeWithRetry<any[]>(() =>
+        supabase
+          .from('products')
+          .select(PRODUCT_SELECT_FIELDS)
+          .eq('active', true)
+          .order('created_at', { ascending: false })
+          .range(from, to)
+      );
 
       if (error || !data) {
         return (localProducts as any[])
@@ -114,12 +150,14 @@ export const productService = {
     const to = from + safeLimit - 1;
 
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('active', true)
-        .order('created_at', { ascending: false })
-        .range(from, to);
+      const { data, error } = await executeWithRetry<any[]>(() =>
+        supabase
+          .from('products')
+          .select(PRODUCT_SELECT_FIELDS)
+          .eq('active', true)
+          .order('created_at', { ascending: false })
+          .range(from, to)
+      );
       
       if (!error && data) {
         return data.map(mapProduct);
@@ -145,11 +183,13 @@ export const productService = {
     const from = safePage * safeLimit;
     const to = from + safeLimit - 1;
 
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(from, to);
+    const { data, error } = await executeWithRetry<any[]>(() =>
+      supabase
+        .from('products')
+        .select(PRODUCT_SELECT_FIELDS)
+        .order('created_at', { ascending: false })
+        .range(from, to)
+    );
 
     if (error || !data || data.length === 0) {
       const mapped = (localProducts as any[]).map(mapProduct);
@@ -159,7 +199,9 @@ export const productService = {
   },
 
   async getProductById(id: string): Promise<Product | undefined> {
-    const { data, error } = await supabase.from('products').select('*').eq('id', id).maybeSingle();
+    const { data, error } = await executeWithRetry<any>(() =>
+      supabase.from('products').select(PRODUCT_SELECT_FIELDS).eq('id', id).maybeSingle()
+    );
     if (error || !data) {
       const mapped = (localProducts as any[]).map(mapProduct);
       return mapped.find((p) => p.id === String(id));
@@ -198,13 +240,15 @@ export const productService = {
     const from = safePage * safeLimit;
     const to = from + safeLimit - 1;
 
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('active', true)
-      .eq('category', category)
-      .order('created_at', { ascending: false })
-      .range(from, to);
+    const { data, error } = await executeWithRetry<any[]>(() =>
+      supabase
+        .from('products')
+        .select(PRODUCT_SELECT_FIELDS)
+        .eq('active', true)
+        .eq('category', category)
+        .order('created_at', { ascending: false })
+        .range(from, to)
+    );
 
     if (error || !data || data.length === 0) {
       const mapped = (localProducts as any[])
@@ -218,23 +262,22 @@ export const productService = {
   },
 
   async getNewArrivals(): Promise<Product[]> {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('active', true)
-      .eq('is_new', true)
-      .order('created_at', { ascending: false });
+    const { data, error } = await executeWithRetry<any[]>(() =>
+      supabase
+        .from('products')
+        .select(PRODUCT_SELECT_FIELDS)
+        .eq('active', true)
+        .eq('is_new', true)
+        .order('created_at', { ascending: false })
+        .limit(DB_PAGE_SIZE)
+    );
     
     if (error || !data || data.length === 0) {
       // Fallback robusto: retorna todo o catálogo ativo, sem limitar a 10
-      const { data: allActiveData } = await supabase
-        .from('products')
-        .select('*')
-        .eq('active', true)
-        .order('created_at', { ascending: false });
+      const allActiveData = await this.getAllActiveProducts();
       
       if (allActiveData && allActiveData.length > 0) {
-        return allActiveData.map(mapProduct);
+        return allActiveData;
       }
 
       return (localProducts as any[])
@@ -247,7 +290,13 @@ export const productService = {
 
   async searchProducts(query: string): Promise<Product[]> {
     const q = query.toLowerCase();
-    const { data, error } = await supabase.from('products').select('*').eq('active', true).or(`name.ilike.%${q}%,category.ilike.%${q}%,description.ilike.%${q}%`);
+    const { data, error } = await executeWithRetry<any[]>(() =>
+      supabase
+        .from('products')
+        .select(PRODUCT_SELECT_FIELDS)
+        .eq('active', true)
+        .or(`name.ilike.%${q}%,category.ilike.%${q}%,description.ilike.%${q}%`)
+    );
     if (error || !data || data.length === 0) {
       return (localProducts as any[]).filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)).map(mapProduct);
     }
