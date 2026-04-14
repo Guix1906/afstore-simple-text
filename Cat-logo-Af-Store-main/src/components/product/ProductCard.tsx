@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Product } from '../../types';
 import PriceDisplay from '../ui/PriceDisplay';
 import StableImage from '../ui/StableImage';
-import { DEFAULT_IMAGE_FALLBACK, getProductImageOrFallback } from '../../utils/imageOptimizer';
+import { DEFAULT_IMAGE_FALLBACK, getProductImageSources } from '../../utils/imageOptimizer';
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '../../hooks/useOptimizedQueries';
 import { productService } from '../../services/productService';
@@ -15,6 +15,7 @@ interface ProductCardProps {
 const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const imageSources = getProductImageSources(product.images);
 
   const handlePrefetch = () => {
     // Prefetch product
@@ -41,11 +42,14 @@ const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
       {/* Image Block */}
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-brand-card border border-brand-border/40">
         <StableImage
-          src={getProductImageOrFallback(product.images, 500)}
+          src={imageSources.src}
+          webpSrcSet={imageSources.webpSrcSet}
+          avifSrcSet={imageSources.avifSrcSet}
+          imgSizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           fallbackSrc={DEFAULT_IMAGE_FALLBACK}
           alt={product.name}
           loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 will-change-transform"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           referrerPolicy="no-referrer"
           decoding="async"
           fetchPriority="low"
@@ -59,7 +63,7 @@ const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
           {product.isOnSale && (
-            <span className="bg-brand-danger text-brand-text text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-sm shadow-lg">
+            <span className="bg-brand-danger text-brand-text text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-sm">
               SALE
             </span>
           )}

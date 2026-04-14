@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PageWrapper from '../components/layout/PageWrapper';
 import HeroBanner from '../components/home/HeroBanner';
 import CategoryTabs from '../components/layout/CategoryTabs';
@@ -12,13 +12,25 @@ import { productService } from '../services/productService';
 export default function Home() {
   const queryClient = useQueryClient();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [pageSize, setPageSize] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < 768 ? 8 : 12
+  );
   const {
     data,
     isLoading,
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-  } = useInfiniteActiveProducts(12);
+  } = useInfiniteActiveProducts(pageSize);
+
+  useEffect(() => {
+    const onResize = () => {
+      setPageSize(window.innerWidth < 768 ? 8 : 12);
+    };
+
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const products = useMemo(() => {
     if (!data?.pages) return [];
@@ -49,7 +61,7 @@ export default function Home() {
           void fetchNextPage();
         }
       },
-      { rootMargin: '600px 0px' }
+      { rootMargin: '280px 0px', threshold: 0.01 }
     );
 
     observer.observe(target);
@@ -105,7 +117,18 @@ export default function Home() {
         )}
 
         {hasNextPage && <div ref={sentinelRef} className="h-10" aria-hidden="true" />}
-        {isFetchingNextPage && <SectionSkeleton titleWidth="w-0" count={4} />}
+        {isFetchingNextPage && <SectionSkeleton titleWidth="w-0" count={pageSize >= 12 ? 4 : 2} />}
+
+        {hasNextPage && !isFetchingNextPage && (
+          <div className="px-4 pb-2 flex justify-center">
+            <button
+              onClick={() => void fetchNextPage()}
+              className="btn-primary"
+            >
+              Carregar mais produtos
+            </button>
+          </div>
+        )}
 
         <WhatsAppBanner />
       </div>
