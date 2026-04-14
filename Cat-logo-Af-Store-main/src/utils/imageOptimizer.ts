@@ -10,8 +10,29 @@ const DESKTOP_MAX_WIDTH = 1600;
 
 const cleanImageUrl = (url: string) => String(url || '').trim();
 
+const normalizeAppHostedStaticUrl = (url: string) => {
+  const normalized = cleanImageUrl(url);
+  if (!normalized || normalized.startsWith('/') || normalized.startsWith('data:') || normalized.startsWith('blob:')) {
+    return normalized;
+  }
+
+  try {
+    const parsed = new URL(normalized);
+    const isLovableHost = parsed.hostname.includes('lovable.app');
+    const isImagePath = /\.(jpe?g|png|webp|avif|svg)(\?.*)?$/i.test(`${parsed.pathname}${parsed.search}`);
+
+    if (isLovableHost && isImagePath) {
+      return `${parsed.pathname}${parsed.search}`;
+    }
+
+    return normalized;
+  } catch {
+    return normalized;
+  }
+};
+
 export const withImageVersion = (url: string, version?: string | number) => {
-  const normalizedUrl = cleanImageUrl(url);
+  const normalizedUrl = normalizeAppHostedStaticUrl(url);
   if (!normalizedUrl || normalizedUrl.startsWith('data:') || normalizedUrl.startsWith('blob:')) return normalizedUrl;
 
   const versionValue = String(version ?? '').trim();
@@ -87,7 +108,7 @@ const clampResponsiveWidth = (width: number) => {
 };
 
 export const getOptimizedImage = (url: string, width = 600) => {
-  const normalizedUrl = cleanImageUrl(url);
+  const normalizedUrl = normalizeAppHostedStaticUrl(url);
   if (!normalizedUrl) return DEFAULT_IMAGE_FALLBACK;
 
   const targetWidth = clampResponsiveWidth(width);
@@ -108,7 +129,7 @@ export const getOptimizedImage = (url: string, width = 600) => {
 };
 
 export const getResponsiveImageSources = (url: string) => {
-  const normalizedUrl = cleanImageUrl(url);
+  const normalizedUrl = normalizeAppHostedStaticUrl(url);
   if (!normalizedUrl || normalizedUrl.startsWith('data:') || normalizedUrl.startsWith('blob:')) {
     return {
       src: normalizedUrl || DEFAULT_IMAGE_FALLBACK,

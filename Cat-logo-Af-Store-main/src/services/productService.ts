@@ -52,6 +52,14 @@ const stripImageVersion = (url: string) => {
   const normalized = String(url || '').trim();
   if (!normalized) return '';
 
+  if (normalized.startsWith('/')) {
+    const [pathname, search = ''] = normalized.split('?');
+    const params = new URLSearchParams(search);
+    params.delete('updatedAt');
+    const nextSearch = params.toString();
+    return nextSearch ? `${pathname}?${nextSearch}` : pathname;
+  }
+
   try {
     const parsed = new URL(normalized, typeof window !== 'undefined' ? window.location.origin : 'https://localhost');
     parsed.searchParams.delete('updatedAt');
