@@ -1,6 +1,5 @@
 import { supabase } from '../integrations/supabase/client';
 import { Product } from '../types';
-import localProducts from '../data/products.json';
 import { withImageVersion } from '../utils/imageOptimizer';
 
 const PAGE_SIZE_FALLBACK = 12;
@@ -258,17 +257,7 @@ const setCachedActiveProducts = (items: Product[], mode: 'merge' | 'replace' = '
   return next;
 };
 
-const getFallbackActiveCatalog = () => {
-  const cached = getCachedActiveProducts();
-  const local = getLocalActiveProducts();
-  return mergeById(cached, local);
-};
-
-const getLocalActiveProducts = () =>
-  (localProducts as any[])
-    .map(mapProduct)
-    .filter((p) => p.active)
-    .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
+const getFallbackActiveCatalog = () => getCachedActiveProducts();
 
 export const productService = {
   async getAllActiveProducts(): Promise<Product[]> {
@@ -337,10 +326,7 @@ export const productService = {
       return [];
     }
 
-    if (error || !data || data.length === 0) {
-      const mapped = mergeById(getFallbackActiveCatalog(), (localProducts as any[]).map(mapProduct));
-      return paginate(mapped, safePage, safeLimit);
-    }
+    if (error || !data || data.length === 0) return paginate(getFallbackActiveCatalog(), safePage, safeLimit);
 
     const mapped = data.map(mapProduct);
     setCachedActiveProducts(mapped, 'merge');
@@ -348,10 +334,7 @@ export const productService = {
   },
 
   async getProductById(id: string): Promise<Product | undefined> {
-    if (String(id).startsWith('local-')) {
-      const fallbackCatalog = mergeById(getFallbackActiveCatalog(), (localProducts as any[]).map(mapProduct));
-      return fallbackCatalog.find((p) => p.id === String(id));
-    }
+    if (String(id).startsWith('local-')) return undefined;
 
     const { data, error } = await executeWithRetry<any>(() =>
       supabase.from('products').select(PRODUCT_DETAIL_FIELDS).eq('id', id).maybeSingle()
@@ -361,10 +344,7 @@ export const productService = {
       return undefined;
     }
 
-    if (error || !data) {
-      const mapped = mergeById(getFallbackActiveCatalog(), (localProducts as any[]).map(mapProduct));
-      return mapped.find((p) => p.id === String(id));
-    }
+    if (error || !data) return getFallbackActiveCatalog().find((p) => p.id === String(id));
 
     const mapped = mapProduct(data);
     setCachedActiveProducts([mapped], 'merge');
@@ -423,9 +403,7 @@ export const productService = {
     }
 
     if (error || !data || data.length === 0) {
-      const mapped = mergeById(getFallbackActiveCatalog(), (localProducts as any[]).map(mapProduct))
-        .filter((p) => p.active && p.category === category);
-
+      const mapped = getFallbackActiveCatalog().filter((p) => p.active && p.category === category);
       return paginate(mapped, safePage, safeLimit);
     }
     const mapped = data.map(mapProduct);
@@ -470,8 +448,9 @@ export const productService = {
       return [];
     }
     if (error || !data || data.length === 0) {
-      return mergeById(getFallbackActiveCatalog(), (localProducts as any[]).map(mapProduct))
-        .filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+      return getFallbackActiveCatalog().filter(
+        (p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
+      );
     }
 
     const mapped = data.map(mapProduct);
