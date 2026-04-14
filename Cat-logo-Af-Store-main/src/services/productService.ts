@@ -112,6 +112,19 @@ const sanitizePayload = (p: Partial<Product>) => ({
   tags: p.tags,
 });
 
+const fetchProductsByIds = async (ids: string[]) => {
+  if (!ids.length) return [] as Product[];
+
+  const { data, error } = await executeWithRetry<any[]>(() =>
+    supabase.from('products').select(PRODUCT_LIST_FIELDS).in('id', ids)
+  );
+
+  if (error || !data) return [];
+
+  const mapById = new Map(data.map((item) => [String(item.id), mapProduct(item)]));
+  return ids.map((id) => mapById.get(String(id))).filter(Boolean) as Product[];
+};
+
 const executeWithRetry = async <T>(
   queryFn: () => Promise<{ data: T | null; error: any }>,
   retries = 1
@@ -144,15 +157,15 @@ export const productService = {
       const from = page * pageSize;
       const to = from + pageSize - 1;
 
-      const { data, error } = await executeWithRetry<any[]>(() =>
+      const { data: idRows, error } = await executeWithRetry<any[]>(() =>
         supabase
           .from('products')
-          .select(PRODUCT_LIST_FIELDS)
+          .select('id')
           .eq('active', true)
           .range(from, to)
       );
 
-      if (error || !data) {
+      if (error || !idRows) {
         if (isAbortedRequest(error)) {
           return allProducts;
         }
@@ -162,10 +175,11 @@ export const productService = {
           .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
       }
 
-      const mapped = data.map(mapProduct);
+      const ids = idRows.map((row) => String(row.id));
+      const mapped = await fetchProductsByIds(ids);
       allProducts.push(...mapped);
 
-      if (mapped.length < pageSize) break;
+      if (ids.length < pageSize) break;
       page += 1;
     }
 
@@ -178,16 +192,17 @@ export const productService = {
     const to = from + safeLimit - 1;
 
     try {
-      const { data, error } = await executeWithRetry<any[]>(() =>
+      const { data: idRows, error } = await executeWithRetry<any[]>(() =>
         supabase
           .from('products')
-          .select(PRODUCT_LIST_FIELDS)
+          .select('id')
           .eq('active', true)
           .range(from, to)
       );
       
-      if (!error && data) {
-        return data.map(mapProduct);
+      if (!error && idRows) {
+        const ids = idRows.map((row) => String(row.id));
+        return fetchProductsByIds(ids);
       }
 
       if (isAbortedRequest(error)) {
