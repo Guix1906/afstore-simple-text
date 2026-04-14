@@ -5,6 +5,7 @@ import { Lock } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
 import { adminAuthService } from '../../services/adminAuthService';
 import { useAdminSession } from '../../hooks/useAdminSession';
+import { toast } from 'sonner';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -62,10 +63,13 @@ export default function AdminLogin() {
           throw new Error(adminError || 'Seu usuário não possui permissão de administrador.');
         }
 
+        toast.success('Login realizado com sucesso.');
         navigate('/admin/dashboard');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao autenticar');
+      const message = err instanceof Error ? err.message : 'Erro ao autenticar';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -94,13 +98,17 @@ export default function AdminLogin() {
 
       if (!data?.valid) {
         setError('Senha de liberação inválida.');
+        toast.error('Senha de liberação inválida.');
         return;
       }
 
       setIsRegisterMode(true);
       setMessage('Liberação confirmada. Agora você pode criar um novo acesso.');
+      toast.success('Liberação confirmada para novo acesso.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível validar a senha de liberação.');
+      const message = err instanceof Error ? err.message : 'Não foi possível validar a senha de liberação.';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
