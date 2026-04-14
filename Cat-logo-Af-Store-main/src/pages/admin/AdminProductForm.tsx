@@ -1,21 +1,34 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { productService } from '../../services/productService';
-import { adminAuthService } from '../../services/adminAuthService';
 import { Product } from '../../types';
-import { ChevronLeft, Save, UploadCloud, CheckCircle2, Trash2 } from 'lucide-react';
+import { ChevronLeft, Save, UploadCloud, Trash2 } from 'lucide-react';
 import { CATEGORIES } from '../../constants';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { useAdminSession } from '../../hooks/useAdminSession';
+import StableImage from '../../components/ui/StableImage';
+import { DEFAULT_IMAGE_FALLBACK, getOptimizedImage } from '../../utils/imageOptimizer';
+
+const productSchema = z.object({
+  name: z.string().trim().min(3, 'O nome do produto precisa ter pelo menos 3 caracteres.'),
+  price: z.number().positive('O preço precisa ser maior que zero.'),
+  description: z.string().trim().min(4, 'Preencha a descrição comercial.'),
+  images: z.array(z.string()).min(1, 'Adicione pelo menos 1 imagem ao produto.'),
+});
 
 export default function AdminProductForm() {
+  const MAX_IMAGE_SIZE_BYTES = 6 * 1024 * 1024;
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [successToast, setSuccessToast] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { isReady, isAdmin } = useAdminSession();
 
   const [formData, setFormData] = useState<Partial<Product>>({
     name: '',
@@ -34,7 +47,8 @@ export default function AdminProductForm() {
 
   useEffect(() => {
     const loadProduct = async () => {
-      const { isAdmin } = await adminAuthService.isAdmin();
+      if (!isReady) return;
+
       if (!isAdmin) {
         navigate('/admin');
         return;
@@ -50,29 +64,36 @@ export default function AdminProductForm() {
       }
       setLoading(false);
     };
-    loadProduct();
-  }, [id, navigate]);
+    void loadProduct();
+  }, [id, isAdmin, isReady, navigate]);
 
-  const showToast = (msg: string) => {
-    setSuccessToast(msg);
-    setTimeout(() => setSuccessToast(''), 3000);
-  };
+  const parsedForm = useMemo(
+    () =>
+      productSchema.safeParse({
+        name: formData.name ?? '',
+        price: Number(formData.price || 0),
+        description: formData.description ?? '',
+        images: formData.images ?? [],
+      }),
+    [formData.description, formData.images, formData.name, formData.price]
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const productName = formData.name?.trim();
-    const priceValue = Number(formData.price || 0);
+  const categoryOptions = useMemo(() => {
+    const base = CATEGORIES.map((c) => c.slug);
+    const current = (formData.category || '').trim();
 
-    if (!productName || productName.length < 3) {
-      setError('O nome do produto precisa ter pelo menos 3 caracteres.');
-      return;
+    if (current && !base.includes(current)) {
+      base.push(current);
     }
-    if (!priceValue || priceValue <= 0) {
-      setError('O preço precisa ser maior que zero.');
-      return;
-    }
-    if (!formData.images || formData.images.length === 0) {
-      setError('Adicione pelo menos 1 imagem ao produto.');
+
+    return base;
+  }, [formData.category]);
+
+  const saveProduct = useCallback(async () => {
+    if (!parsedForm.success) {
+      const firstError = parsedForm.error.issues[0]?.message || 'Revise os campos obrigatórios.';
+      setError(firstError);
+      toast.error(firstError);
       return;
     }
 
@@ -82,18 +103,24 @@ export default function AdminProductForm() {
     try {
       if (id) {
         await productService.updateProduct(id, formData);
-        showToast('Produto atualizado com sucesso!');
+        toast.success('Produto atualizado com sucesso!');
       } else {
         await productService.createProduct(formData);
-        showToast('Produto criado com sucesso!');
+        toast.success('Produto criado com sucesso!');
       }
       navigate('/admin/dashboard');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao salvar produto.';
       setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
+  }, [formData, id, navigate, parsedForm]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveProduct();
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
@@ -124,10 +151,16 @@ export default function AdminProductForm() {
     });
 
   const processFiles = async (files: File[]) => {
-    const validFiles = files.filter(f => f.type.startsWith('image/'));
+    const validFiles = files.filter((f) => f.type.startsWith('image/') && f.size <= MAX_IMAGE_SIZE_BYTES);
     if (!validFiles.length) {
-      setError('Arraste apenas imagens válidas (PNG/JPG).');
+      const message = 'Use imagens PNG/JPG/WEBP de até 6MB.';
+      setError(message);
+      toast.error(message);
       return;
+    }
+
+    if (validFiles.length !== files.length) {
+      toast.error('Algumas imagens foram ignoradas por formato/tamanho inválido.');
     }
     
     setError('');
@@ -139,12 +172,28 @@ export default function AdminProductForm() {
         ...prev,
         images: [...(prev.images || []), ...dataUrls],
       }));
+      toast.success('Imagens adicionadas com sucesso.');
     } catch (err) {
-      setError('Erro ao processar imagem. Tente outra foto.');
+      const message = 'Erro ao processar imagem. Tente outra foto.';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsUploadingImage(false);
     }
-  }
+  };
+
+  const handleAddCategory = () => {
+    const normalized = customCategory.trim().toLowerCase();
+    if (!normalized) return;
+    if (normalized.length < 3) {
+      toast.error('Categoria deve ter pelo menos 3 caracteres.');
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, category: normalized }));
+    setCustomCategory('');
+    toast.success('Categoria aplicada ao produto.');
+  };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -176,7 +225,7 @@ export default function AdminProductForm() {
     });
   };
 
-  if (loading) {
+  if (!isReady || loading) {
     return (
       <div className="min-h-screen bg-[#0F0F0F] animate-pulse">
         <header className="px-6 h-20 bg-[#0F0F0F] border-b border-white/5 flex items-center justify-between">
@@ -193,14 +242,6 @@ export default function AdminProductForm() {
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-[#E5E5E5] font-sans pb-24">
-      {/* Toast Notification */}
-      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 ${successToast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
-         <div className="bg-green-500 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-2xl">
-           <CheckCircle2 size={16} />
-           {successToast}
-         </div>
-      </div>
-
       <header className="sticky top-0 z-50 px-4 md:px-6 h-20 flex items-center justify-between bg-[#0F0F0F]/80 backdrop-blur-xl border-b border-white/5">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/admin/dashboard')} className="w-10 h-10 flex items-center justify-center text-[#888] hover:text-white bg-[#181818] border border-white/5 hover:border-white/20 rounded-full transition-all">
@@ -213,8 +254,9 @@ export default function AdminProductForm() {
         </div>
         
         <button 
-          onClick={handleSubmit} 
-          disabled={saving}
+          onClick={saveProduct}
+          type="button"
+          disabled={saving || isUploadingImage || !parsedForm.success}
           className="bg-brand-gold hover:bg-brand-gold-light disabled:opacity-50 disabled:cursor-not-allowed text-black font-black text-[9px] md:text-[10px] uppercase tracking-wider px-4 md:px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-brand-gold/10"
         >
           <Save size={14} className="hidden sm:block" /> {saving ? '...' : 'Salvar'}
@@ -246,6 +288,8 @@ export default function AdminProductForm() {
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Preço Atual (R$)</label>
                   <input 
                     type="number" 
+                    step="0.01"
+                    min="0"
                     value={formData.price || ''}
                     onChange={e => setFormData({...formData, price: Number(e.target.value)})}
                     className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:border-brand-gold outline-none transition-all placeholder:text-white/20"
@@ -256,6 +300,8 @@ export default function AdminProductForm() {
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Preço Antigo <span className="opacity-50">(R$, Opcional)</span></label>
                   <input 
                     type="number" 
+                    step="0.01"
+                    min="0"
                     value={formData.originalPrice || ''}
                     onChange={e => setFormData({...formData, originalPrice: e.target.value ? Number(e.target.value) : undefined})}
                     className="w-full bg-[#121212] border border-dashed border-white/10 rounded-xl px-4 py-4 text-sm text-[#888] focus:text-white focus:border-white/30 outline-none transition-all placeholder:text-white/20"
@@ -272,10 +318,25 @@ export default function AdminProductForm() {
                     onChange={e => setFormData({...formData, category: e.target.value})}
                     className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:border-brand-gold outline-none appearance-none cursor-pointer"
                   >
-                    {CATEGORIES.map(c => (
-                       <option key={c.slug} value={c.slug}>{c.name}</option>
+                    {categoryOptions.map((slug) => (
+                       <option key={slug} value={slug}>{slug}</option>
                     ))}
                   </select>
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      placeholder="Nova categoria"
+                      className="w-full bg-[#121212] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-gold outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCategory}
+                      className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold uppercase tracking-wider"
+                    >
+                      Adicionar
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Gênero</label>
@@ -361,7 +422,15 @@ export default function AdminProductForm() {
                  <div className="grid grid-cols-2 gap-3 mt-4">
                    {formData.images.map((img, i) => (
                      <div key={i} className="relative aspect-[3/4] bg-black border border-white/10 rounded-xl overflow-hidden group">
-                        <img src={img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                         <StableImage
+                           src={getOptimizedImage(img, 480)}
+                           fallbackSrc={DEFAULT_IMAGE_FALLBACK}
+                           showSkeleton={false}
+                           alt="Pré-visualização da foto"
+                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                           loading="lazy"
+                           decoding="async"
+                         />
                         <div className="absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-black/80 to-transparent" />
                         {i === 0 && (
                            <div className="absolute top-2 left-2 bg-brand-gold text-black text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded">Capa</div>

@@ -21,10 +21,11 @@ const DEFAULT_PAGE_SIZE = 12;
 const DEFAULT_STALE_TIME = 1000 * 60 * 10; // 10 minutos
 
 // Hooks
-export const useProducts = (page = 0, limit = 20) => {
+export const useProducts = (page = 0, limit = 20, enabled = true) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.products, { page, limit }],
     queryFn: () => productService.getProducts(page, limit),
+    enabled,
     staleTime: DEFAULT_STALE_TIME,
     placeholderData: keepPreviousData,
     retry: 2,
@@ -99,10 +100,11 @@ export const useProduct = (id: string) => {
   });
 };
 
-export const useConfig = () => {
+export const useConfig = (enabled = true) => {
   return useQuery({
     queryKey: QUERY_KEYS.config,
     queryFn: () => configService.getConfig(),
+    enabled,
     staleTime: 1000 * 60 * 60, // Config rarely changes, cache for 1 hour
   });
 };
@@ -124,6 +126,8 @@ export const useProductMutations = () => {
     mutationFn: (product: Partial<Product>) => productService.createProduct(product),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
     },
   });
 
@@ -132,6 +136,8 @@ export const useProductMutations = () => {
       productService.updateProduct(id, product),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.product(variables.id) });
     },
   });
@@ -140,6 +146,8 @@ export const useProductMutations = () => {
     mutationFn: (id: string) => productService.deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
     },
   });
 
@@ -148,6 +156,8 @@ export const useProductMutations = () => {
       productService.toggleProductActive(id, active),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
     },
   });
 
