@@ -2,13 +2,39 @@
  * Otimiza URLs de imagens do Supabase para reduzir consumo de banda e melhorar LCP.
  * Adiciona parâmetros de largura e formato WebP automaticamente.
  */
-export const DEFAULT_IMAGE_FALLBACK = '/af-logo.jpeg';
+export const DEFAULT_IMAGE_FALLBACK = '/image-placeholder.svg';
 const IMAGE_QUALITY = 75;
 const MOBILE_MAX_WIDTH = 800;
 const TABLET_MAX_WIDTH = 1200;
 const DESKTOP_MAX_WIDTH = 1600;
 
 const cleanImageUrl = (url: string) => String(url || '').trim();
+
+export const withImageVersion = (url: string, version?: string | number) => {
+  const normalizedUrl = cleanImageUrl(url);
+  if (!normalizedUrl || normalizedUrl.startsWith('data:') || normalizedUrl.startsWith('blob:')) return normalizedUrl;
+
+  const versionValue = String(version ?? '').trim();
+  if (!versionValue) return normalizedUrl;
+
+  try {
+    const parsed = new URL(
+      normalizedUrl,
+      typeof window !== 'undefined' ? window.location.origin : 'https://localhost'
+    );
+
+    if (!parsed.searchParams.get('updatedAt')) {
+      parsed.searchParams.set('updatedAt', versionValue);
+    }
+
+    return parsed.toString();
+  } catch {
+    const separator = normalizedUrl.includes('?') ? '&' : '?';
+    return normalizedUrl.includes('updatedAt=')
+      ? normalizedUrl
+      : `${normalizedUrl}${separator}updatedAt=${encodeURIComponent(versionValue)}`;
+  }
+};
 
 const isLocalStaticImage = (url: string) => /^\/[^?]+/.test(url);
 
