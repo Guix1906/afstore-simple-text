@@ -1,14 +1,27 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/layout/PageWrapper';
 import ProductCard from '../components/product/ProductCard';
-import { useAllActiveProducts } from '../hooks/useOptimizedQueries';
+import { useInfiniteActiveProducts } from '../hooks/useOptimizedQueries';
 import { ChevronLeft, Sparkles } from 'lucide-react';
 import { SectionSkeleton } from '../components/layout/Skeletons';
 import { goBackOr } from '../utils/navigation';
 
 export default function NewArrivalsPage() {
   const navigate = useNavigate();
-  const { data: displayProducts = [], isLoading, isFetching } = useAllActiveProducts();
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteActiveProducts(24);
+
+  const displayProducts = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flat();
+  }, [data]);
 
   return (
     <PageWrapper>
@@ -31,12 +44,12 @@ export default function NewArrivalsPage() {
         <div className="flex items-center gap-2">
            <Sparkles size={14} className="text-brand-gold" />
            <span className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-white">
-              {isLoading || isFetching ? 'Carregando Coleção...' : `${displayProducts.length} Peças Disponíveis`}
+              {isLoading ? 'Carregando Coleção...' : `${displayProducts.length} Peças Carregadas`}
            </span>
         </div>
       </div>
 
-      {isLoading || isFetching ? (
+      {isLoading ? (
         <div className="grid grid-cols-2 gap-4 px-4 pb-24">
           <SectionSkeleton titleWidth="w-0" count={8} />
         </div>
@@ -48,6 +61,26 @@ export default function NewArrivalsPage() {
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
+
+            {hasNextPage && (
+              <div className="px-4 pb-24 flex justify-center">
+                <button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="btn-primary !px-8 disabled:opacity-60"
+                >
+                  {isFetchingNextPage ? 'Carregando mais...' : 'Carregar mais'}
+                </button>
+              </div>
+            )}
+
+            {!hasNextPage && displayProducts.length > 0 && isFetching && (
+              <div className="px-4 pb-20 text-center">
+                <span className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-white/60">
+                  Atualizando catálogo...
+                </span>
+              </div>
+            )}
           ) : (
             <div className="py-24 text-center px-10 space-y-6">
               <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto">
