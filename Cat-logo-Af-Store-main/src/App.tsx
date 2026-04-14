@@ -5,19 +5,51 @@ import BottomNav from './components/layout/BottomNav';
 import SidebarMenu from './components/layout/SidebarMenu';
 import FloatingWhatsApp from './components/layout/FloatingWhatsApp';
 
+const createRetryableLazy = <T extends Record<string, any>>(
+  importFn: () => Promise<T>,
+  moduleKey: string
+) =>
+  lazy(async () => {
+    try {
+      const loaded = await importFn();
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(`lazy-reload:${moduleKey}`);
+      }
+      return loaded;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const isDynamicImportFetchError =
+        /Failed to fetch dynamically imported module/i.test(message) ||
+        /Importing a module script failed/i.test(message);
+
+      if (typeof window !== 'undefined' && isDynamicImportFetchError) {
+        const reloadKey = `lazy-reload:${moduleKey}`;
+        const hasReloaded = sessionStorage.getItem(reloadKey) === '1';
+
+        if (!hasReloaded) {
+          sessionStorage.setItem(reloadKey, '1');
+          window.location.reload();
+          return new Promise<never>(() => {});
+        }
+      }
+
+      throw error;
+    }
+  });
+
 // Lazy loading pages for performance
-const Home = lazy(() => import('./pages/Home'));
-const CategoryPage = lazy(() => import('./pages/CategoryPage'));
-const ProductPage = lazy(() => import('./pages/ProductPage'));
-const SearchPage = lazy(() => import('./pages/SearchPage'));
-const NewArrivalsPage = lazy(() => import('./pages/NewArrivalsPage'));
-const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
-const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const Home = createRetryableLazy(() => import('./pages/Home'), 'home');
+const CategoryPage = createRetryableLazy(() => import('./pages/CategoryPage'), 'category-page');
+const ProductPage = createRetryableLazy(() => import('./pages/ProductPage'), 'product-page');
+const SearchPage = createRetryableLazy(() => import('./pages/SearchPage'), 'search-page');
+const NewArrivalsPage = createRetryableLazy(() => import('./pages/NewArrivalsPage'), 'new-arrivals-page');
+const CategoriesPage = createRetryableLazy(() => import('./pages/CategoriesPage'), 'categories-page');
+const NotFoundPage = createRetryableLazy(() => import('./pages/NotFoundPage'), 'not-found-page');
 
 // Admin Pages
-const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
-const AdminProductForm = lazy(() => import('./pages/admin/AdminProductForm'));
+const AdminLogin = createRetryableLazy(() => import('./pages/admin/AdminLogin'), 'admin-login');
+const AdminDashboard = createRetryableLazy(() => import('./pages/admin/AdminDashboard'), 'admin-dashboard');
+const AdminProductForm = createRetryableLazy(() => import('./pages/admin/AdminProductForm'), 'admin-product-form');
 
 function ScrollToTop() {
   const { pathname } = useLocation();
