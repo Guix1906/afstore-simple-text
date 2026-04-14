@@ -7,6 +7,7 @@ import { Product } from '../types';
 export const QUERY_KEYS = {
   products: ['products'] as const,
   activeProducts: ['products', 'active'] as const,
+  allActiveProducts: ['products', 'active', 'all'] as const,
   infiniteActiveProducts: (limit: number) => ['products', 'active', 'infinite', limit] as const,
   newArrivals: ['products', 'new'] as const,
   productsByCategory: (category: string) => ['products', 'category', category] as const,
@@ -67,6 +68,17 @@ export const useActiveProducts = (page = 0, limit = DEFAULT_PAGE_SIZE) => {
     queryFn: () => productService.getActiveProducts(page, limit),
     staleTime: DEFAULT_STALE_TIME,
     placeholderData: keepPreviousData,
+    retry: 2,
+  });
+};
+
+export const useAllActiveProducts = () => {
+  return useQuery({
+    queryKey: QUERY_KEYS.allActiveProducts,
+    queryFn: () => productService.getAllActiveProducts(),
+    staleTime: DEFAULT_STALE_TIME,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     retry: 2,
   });
 };
