@@ -1,10 +1,19 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { productService } from '../../services/productService';
-import { adminAuthService } from '../../services/adminAuthService';
 import { Product } from '../../types';
-import { ChevronLeft, Save, UploadCloud, CheckCircle2, Trash2 } from 'lucide-react';
+import { ChevronLeft, Save, UploadCloud, Trash2 } from 'lucide-react';
 import { CATEGORIES } from '../../constants';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { useAdminSession } from '../../hooks/useAdminSession';
+
+const productSchema = z.object({
+  name: z.string().trim().min(3, 'O nome do produto precisa ter pelo menos 3 caracteres.'),
+  price: z.number().positive('O preço precisa ser maior que zero.'),
+  description: z.string().trim().min(4, 'Preencha a descrição comercial.'),
+  images: z.array(z.string()).min(1, 'Adicione pelo menos 1 imagem ao produto.'),
+});
 
 export default function AdminProductForm() {
   const { id } = useParams();
@@ -12,10 +21,10 @@ export default function AdminProductForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [successToast, setSuccessToast] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { isReady, isAdmin } = useAdminSession();
 
   const [formData, setFormData] = useState<Partial<Product>>({
     name: '',
@@ -34,7 +43,8 @@ export default function AdminProductForm() {
 
   useEffect(() => {
     const loadProduct = async () => {
-      const { isAdmin } = await adminAuthService.isAdmin();
+      if (!isReady) return;
+
       if (!isAdmin) {
         navigate('/admin');
         return;
@@ -50,29 +60,25 @@ export default function AdminProductForm() {
       }
       setLoading(false);
     };
-    loadProduct();
-  }, [id, navigate]);
+    void loadProduct();
+  }, [id, isAdmin, isReady, navigate]);
 
-  const showToast = (msg: string) => {
-    setSuccessToast(msg);
-    setTimeout(() => setSuccessToast(''), 3000);
-  };
+  const parsedForm = useMemo(
+    () =>
+      productSchema.safeParse({
+        name: formData.name ?? '',
+        price: Number(formData.price || 0),
+        description: formData.description ?? '',
+        images: formData.images ?? [],
+      }),
+    [formData.description, formData.images, formData.name, formData.price]
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const productName = formData.name?.trim();
-    const priceValue = Number(formData.price || 0);
-
-    if (!productName || productName.length < 3) {
-      setError('O nome do produto precisa ter pelo menos 3 caracteres.');
-      return;
-    }
-    if (!priceValue || priceValue <= 0) {
-      setError('O preço precisa ser maior que zero.');
-      return;
-    }
-    if (!formData.images || formData.images.length === 0) {
-      setError('Adicione pelo menos 1 imagem ao produto.');
+  const saveProduct = useCallback(async () => {
+    if (!parsedForm.success) {
+      const firstError = parsedForm.error.issues[0]?.message || 'Revise os campos obrigatórios.';
+      setError(firstError);
+      toast.error(firstError);
       return;
     }
 
@@ -82,18 +88,24 @@ export default function AdminProductForm() {
     try {
       if (id) {
         await productService.updateProduct(id, formData);
-        showToast('Produto atualizado com sucesso!');
+        toast.success('Produto atualizado com sucesso!');
       } else {
         await productService.createProduct(formData);
-        showToast('Produto criado com sucesso!');
+        toast.success('Produto criado com sucesso!');
       }
       navigate('/admin/dashboard');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao salvar produto.';
       setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
+  }, [formData, id, navigate, parsedForm]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveProduct();
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
@@ -139,8 +151,11 @@ export default function AdminProductForm() {
         ...prev,
         images: [...(prev.images || []), ...dataUrls],
       }));
+      toast.success('Imagens adicionadas com sucesso.');
     } catch (err) {
-      setError('Erro ao processar imagem. Tente outra foto.');
+      const message = 'Erro ao processar imagem. Tente outra foto.';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsUploadingImage(false);
     }
@@ -176,7 +191,7 @@ export default function AdminProductForm() {
     });
   };
 
-  if (loading) {
+  if (!isReady || loading) {
     return (
       <div className="min-h-screen bg-[#0F0F0F] animate-pulse">
         <header className="px-6 h-20 bg-[#0F0F0F] border-b border-white/5 flex items-center justify-between">
@@ -193,14 +208,6 @@ export default function AdminProductForm() {
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] text-[#E5E5E5] font-sans pb-24">
-      {/* Toast Notification */}
-      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 ${successToast ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
-         <div className="bg-green-500 text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-widest flex items-center gap-2 shadow-2xl">
-           <CheckCircle2 size={16} />
-           {successToast}
-         </div>
-      </div>
-
       <header className="sticky top-0 z-50 px-4 md:px-6 h-20 flex items-center justify-between bg-[#0F0F0F]/80 backdrop-blur-xl border-b border-white/5">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/admin/dashboard')} className="w-10 h-10 flex items-center justify-center text-[#888] hover:text-white bg-[#181818] border border-white/5 hover:border-white/20 rounded-full transition-all">
@@ -213,8 +220,9 @@ export default function AdminProductForm() {
         </div>
         
         <button 
-          onClick={handleSubmit} 
-          disabled={saving}
+          onClick={saveProduct}
+          type="button"
+          disabled={saving || isUploadingImage || !parsedForm.success}
           className="bg-brand-gold hover:bg-brand-gold-light disabled:opacity-50 disabled:cursor-not-allowed text-black font-black text-[9px] md:text-[10px] uppercase tracking-wider px-4 md:px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-brand-gold/10"
         >
           <Save size={14} className="hidden sm:block" /> {saving ? '...' : 'Salvar'}
@@ -246,6 +254,8 @@ export default function AdminProductForm() {
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Preço Atual (R$)</label>
                   <input 
                     type="number" 
+                    step="0.01"
+                    min="0"
                     value={formData.price || ''}
                     onChange={e => setFormData({...formData, price: Number(e.target.value)})}
                     className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:border-brand-gold outline-none transition-all placeholder:text-white/20"
@@ -256,6 +266,8 @@ export default function AdminProductForm() {
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Preço Antigo <span className="opacity-50">(R$, Opcional)</span></label>
                   <input 
                     type="number" 
+                    step="0.01"
+                    min="0"
                     value={formData.originalPrice || ''}
                     onChange={e => setFormData({...formData, originalPrice: e.target.value ? Number(e.target.value) : undefined})}
                     className="w-full bg-[#121212] border border-dashed border-white/10 rounded-xl px-4 py-4 text-sm text-[#888] focus:text-white focus:border-white/30 outline-none transition-all placeholder:text-white/20"
