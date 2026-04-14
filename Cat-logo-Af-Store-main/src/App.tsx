@@ -92,6 +92,14 @@ export default function App() {
 
   useEffect(() => {
     const prefetchCorePages = () => {
+      const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+      const shouldAvoidPrefetch =
+        connection?.saveData ||
+        connection?.effectiveType === '2g' ||
+        connection?.effectiveType === 'slow-2g';
+
+      if (shouldAvoidPrefetch) return;
+
       void import('./pages/CategoriesPage');
       void import('./pages/SearchPage');
       void import('./pages/NewArrivalsPage');
