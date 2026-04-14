@@ -18,6 +18,14 @@ export const withImageVersion = (url: string, version?: string | number) => {
   if (!versionValue) return normalizedUrl;
 
   try {
+    if (normalizedUrl.startsWith('/')) {
+      const [pathname, search = ''] = normalizedUrl.split('?');
+      const params = new URLSearchParams(search);
+      if (!params.get('updatedAt')) params.set('updatedAt', versionValue);
+      const nextSearch = params.toString();
+      return nextSearch ? `${pathname}?${nextSearch}` : pathname;
+    }
+
     const parsed = new URL(
       normalizedUrl,
       typeof window !== 'undefined' ? window.location.origin : 'https://localhost'
