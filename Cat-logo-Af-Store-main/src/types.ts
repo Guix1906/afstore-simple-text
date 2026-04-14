@@ -18,6 +18,7 @@ export interface Product {
   gender: 'feminino' | 'masculino' | 'unissex';
   tags: string[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface AppConfig {
@@ -25,6 +26,7 @@ export interface AppConfig {
   whatsappMessage: string;
   heroImageUrl?: string;
   heroImageUrls?: string[];
+  updatedAt?: string;
 }
 
 export interface Category {

@@ -1,6 +1,7 @@
 import { supabase } from '../integrations/supabase/client';
 import { Product } from '../types';
 import localProducts from '../data/products.json';
+import { withImageVersion } from '../utils/imageOptimizer';
 
 const PAGE_SIZE_FALLBACK = 12;
 const DB_PAGE_SIZE = 24;
@@ -18,7 +19,9 @@ const PRODUCT_LIST_FIELDS = `
   is_best_seller,
   is_on_sale,
   active,
-  created_at
+  created_at,
+  updated_at,
+  image_url
 `;
 
 const PRODUCT_DETAIL_FIELDS = `
@@ -40,8 +43,23 @@ const PRODUCT_DETAIL_FIELDS = `
   active,
   gender,
   tags,
-  created_at
+  created_at,
+  updated_at,
+  image_url
 `;
+
+const stripImageVersion = (url: string) => {
+  const normalized = String(url || '').trim();
+  if (!normalized) return '';
+
+  try {
+    const parsed = new URL(normalized, typeof window !== 'undefined' ? window.location.origin : 'https://localhost');
+    parsed.searchParams.delete('updatedAt');
+    return parsed.toString();
+  } catch {
+    return normalized.replace(/([?&])updatedAt=[^&#]*/g, '').replace(/[?&]$/, '');
+  }
+};
 
 const normalizePagination = (page = 0, limit = PAGE_SIZE_FALLBACK) => {
   const safePage = Number.isFinite(page) && page >= 0 ? Math.floor(page) : 0;
@@ -90,6 +108,7 @@ const buildSlug = (name?: string, fallbackId?: string) => {
 
 // Função ultra-segura de conversão
 const mapProduct = (p: any): Product => ({
+  ...(p || {}),
   id: String(p.id),
   name: String(p.name || 'Produto sem nome'),
   slug: String(p.slug || ''),
@@ -97,11 +116,22 @@ const mapProduct = (p: any): Product => ({
   price: Number(p.price || 0),
   originalPrice: p.original_price || p.originalPrice || undefined,
   discount: p.discount || undefined,
-  images: Array.isArray(p.images)
-    ? p.images
-        .map((img: unknown) => String(img || '').trim())
-        .filter((img: string) => img.length > 0)
-    : [],
+  images: (() => {
+    const version = p.updated_at || p.created_at || Date.now();
+    const baseImages = Array.isArray(p.images)
+      ? p.images
+          .map((img: unknown) => String(img || '').trim())
+          .filter((img: string) => img.length > 0)
+      : [];
+
+    const withPrimary = baseImages.length > 0
+      ? baseImages
+      : p.image_url
+        ? [String(p.image_url).trim()]
+        : [];
+
+    return withPrimary.map((img) => withImageVersion(img, version));
+  })(),
   sizes: Array.isArray(p.sizes) ? p.sizes : ['P', 'M', 'G'],
   colors: Array.isArray(p.colors) ? p.colors : [],
   description: p.description || '',
@@ -113,6 +143,7 @@ const mapProduct = (p: any): Product => ({
   gender: (p.gender || 'feminino') as any,
   tags: Array.isArray(p.tags) ? p.tags : [],
   createdAt: p.created_at || p.createdAt || new Date().toISOString(),
+  updatedAt: p.updated_at || p.updatedAt || p.created_at || p.createdAt || new Date().toISOString(),
 });
 
 const sanitizePayload = (p: Partial<Product>) => ({
@@ -122,7 +153,8 @@ const sanitizePayload = (p: Partial<Product>) => ({
   price: p.price,
   original_price: p.originalPrice,
   discount: p.discount,
-  images: p.images,
+  image_url: Array.isArray(p.images) && p.images.length > 0 ? stripImageVersion(p.images[0]) : null,
+  images: Array.isArray(p.images) ? p.images.map(stripImageVersion) : [],
   sizes: p.sizes,
   colors: p.colors,
   description: p.description,
@@ -153,7 +185,7 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs = 3500): Promise<T>
 
 const executeWithRetry = async <T>(
   queryFn: () => Promise<{ data: T | null; error: any }>,
-  retries = 0
+  retries = 2
 ) => {
   let lastError: any = null;
 
