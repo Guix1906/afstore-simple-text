@@ -193,15 +193,21 @@ export const productService = {
       .order('created_at', { ascending: false });
     
     if (error || !data || data.length === 0) {
-      // Se não houver produtos marcados como novos no banco, retorna os mais recentes
-      const { data: recentData } = await supabase
+      // Fallback robusto: retorna todo o catálogo ativo, sem limitar a 10
+      const { data: allActiveData } = await supabase
         .from('products')
         .select('*')
         .eq('active', true)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .order('created_at', { ascending: false });
       
-      return (recentData || []).map(mapProduct);
+      if (allActiveData && allActiveData.length > 0) {
+        return allActiveData.map(mapProduct);
+      }
+
+      return (localProducts as any[])
+        .map(mapProduct)
+        .filter((p) => p.active)
+        .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
     }
     return data.map(mapProduct);
   },

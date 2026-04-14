@@ -1,16 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { useMemo } from 'react';
 import PageWrapper from '../components/layout/PageWrapper';
 import ProductCard from '../components/product/ProductCard';
-import { useActiveProducts } from '../hooks/useOptimizedQueries';
+import { useNewArrivals } from '../hooks/useOptimizedQueries';
 import { ChevronLeft, Sparkles } from 'lucide-react';
 import { SectionSkeleton } from '../components/layout/Skeletons';
 import { goBackOr } from '../utils/navigation';
 
 export default function NewArrivalsPage() {
   const navigate = useNavigate();
-  // Mostra todas as peças cadastradas (conforme pedido pelo usuário)
-  const { data: displayProducts = [], isLoading } = useActiveProducts(0, 100);
+  const { data: displayProducts = [], isLoading, isFetching } = useNewArrivals();
 
   return (
     <PageWrapper>
@@ -33,12 +31,12 @@ export default function NewArrivalsPage() {
         <div className="flex items-center gap-2">
            <Sparkles size={14} className="text-brand-gold" />
            <span className="text-[10px] font-sans font-black uppercase tracking-[0.2em] text-white">
-             {isLoading ? 'Carregando Coleção...' : `${displayProducts.length} Peças Disponíveis`}
+              {isLoading || isFetching ? 'Carregando Coleção...' : `${displayProducts.length} Peças Disponíveis`}
            </span>
         </div>
       </div>
 
-      {isLoading ? (
+      {isLoading || isFetching ? (
         <div className="grid grid-cols-2 gap-4 px-4 pb-24">
           <SectionSkeleton titleWidth="w-0" count={8} />
         </div>

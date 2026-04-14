@@ -76,6 +76,9 @@ export const useNewArrivals = () => {
     queryKey: QUERY_KEYS.newArrivals,
     queryFn: () => productService.getNewArrivals(),
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    retry: 2,
   });
 };
 
