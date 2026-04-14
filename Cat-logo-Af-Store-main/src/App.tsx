@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useEffect, useState, Suspense, lazy } from 'react';
 import Header from './components/layout/Header';
 import BottomNav from './components/layout/BottomNav';
@@ -12,6 +12,7 @@ const ProductPage = lazy(() => import('./pages/ProductPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const NewArrivalsPage = lazy(() => import('./pages/NewArrivalsPage'));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // Admin Pages
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
@@ -26,14 +27,18 @@ function ScrollToTop() {
   return null;
 }
 
-// Fallback mínimo — evita layout shift com altura proporcional
-const PageFallback = () => <div className="min-h-screen" />;
+const PageFallback = () => (
+  <div className="min-h-[60vh] flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin" />
+  </div>
+);
 
 function AnimatedRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Suspense fallback={<PageFallback />}><Home /></Suspense>} />
       <Route path="/categoria/:slug" element={<Suspense fallback={<PageFallback />}><CategoryPage /></Suspense>} />
+      <Route path="/categoria" element={<Navigate to="/categorias" replace />} />
       <Route path="/produto/:id" element={<Suspense fallback={<PageFallback />}><ProductPage /></Suspense>} />
       <Route path="/busca" element={<Suspense fallback={<PageFallback />}><SearchPage /></Suspense>} />
       <Route path="/novidades" element={<Suspense fallback={<PageFallback />}><NewArrivalsPage /></Suspense>} />
@@ -43,6 +48,8 @@ function AnimatedRoutes() {
       <Route path="/admin/dashboard" element={<Suspense fallback={<PageFallback />}><AdminDashboard /></Suspense>} />
       <Route path="/admin/produto/novo" element={<Suspense fallback={<PageFallback />}><AdminProductForm /></Suspense>} />
       <Route path="/admin/produto/editar/:id" element={<Suspense fallback={<PageFallback />}><AdminProductForm /></Suspense>} />
+      <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+      <Route path="*" element={<Suspense fallback={<PageFallback />}><NotFoundPage /></Suspense>} />
     </Routes>
   );
 }
@@ -50,6 +57,27 @@ function AnimatedRoutes() {
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const prefetchCorePages = () => {
+      void import('./pages/CategoriesPage');
+      void import('./pages/SearchPage');
+      void import('./pages/NewArrivalsPage');
+      void import('./pages/admin/AdminLogin');
+    };
+
+    if ('requestIdleCallback' in window) {
+      const idleId = (window as Window & { requestIdleCallback: (cb: () => void) => number }).requestIdleCallback(prefetchCorePages);
+      return () => {
+        if ('cancelIdleCallback' in window) {
+          (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+        }
+      };
+    }
+
+    const timeoutId = window.setTimeout(prefetchCorePages, 600);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   useEffect(() => {
     // Garante que o loader suma mesmo se houver erro ou delay no mount
