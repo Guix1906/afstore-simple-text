@@ -10,18 +10,35 @@ const DESKTOP_MAX_WIDTH = 1600;
 const CATALOG_BUCKET = 'catalog-images';
 const LEGACY_FOLDER = 'public/legacy';
 
+const splitPathAndQuery = (value: string) => {
+  const match = value.match(/^([^?#]+)([?#].*)?$/);
+  return {
+    pathname: match?.[1] || value,
+    suffix: match?.[2] || '',
+  };
+};
+
 const isLegacyCatalogPath = (url: string) => {
   if (!url.startsWith('/')) return false;
-  const decoded = decodeURIComponent(url.slice(1));
-  return /whatsapp image/i.test(decoded) && /\.(jpe?g|png|webp|avif)$/i.test(decoded);
+  const { pathname } = splitPathAndQuery(url);
+  const decodedPath = decodeURIComponent(pathname.slice(1));
+  return /whatsapp image/i.test(decodedPath) && /\.(jpe?g|png|webp|avif)$/i.test(decodedPath);
 };
 
 const toStoragePublicUrl = (relativePath: string) => {
   const baseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim();
   if (!baseUrl) return relativePath;
 
-  const normalizedPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
-  return `${baseUrl}/storage/v1/object/public/${CATALOG_BUCKET}/${encodeURIComponent(`${LEGACY_FOLDER}/${normalizedPath}`)}`;
+  const normalizedPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+  const { pathname, suffix } = splitPathAndQuery(normalizedPath);
+  const decodedPath = decodeURIComponent(pathname.slice(1));
+  const objectPath = `${LEGACY_FOLDER}/${decodedPath.replace(/^\/+/, '')}`;
+  const encodedObjectPath = objectPath
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+
+  return `${baseUrl}/storage/v1/object/public/${CATALOG_BUCKET}/${encodedObjectPath}${suffix}`;
 };
 
 const cleanImageUrl = (url: string) => String(url || '').trim();
@@ -34,7 +51,7 @@ const normalizeAppHostedStaticUrl = (url: string) => {
 
   if (normalized.startsWith('/')) {
     if (isLegacyCatalogPath(normalized)) {
-      return toStoragePublicUrl(decodeURIComponent(normalized));
+      return toStoragePublicUrl(normalized);
     }
     return normalized;
   }
