@@ -3,21 +3,22 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfig } from '../../hooks/useOptimizedQueries';
-import { getOptimizedImage } from '../../utils/imageOptimizer';
+import StableImage from '../ui/StableImage';
+import { DEFAULT_IMAGE_FALLBACK, getOptimizedImage } from '../../utils/imageOptimizer';
 
 const DEFAULT_SLIDES = [
   {
     id: 'd1',
     title: "Coleção — Serenity",
     subtitle: "Conforto e leveza para o seu dia",
-    image: "/antigravity-assets/banner1.jpg",
+    image: "/af-logo.jpeg",
     link: "/categoria/feminino"
   },
   {
     id: 'd2',
     title: "Linha — Violet",
     subtitle: "Estilo técnico com atitude",
-    image: "/antigravity-assets/banner2.jpg",
+    image: "/af-logo.jpeg",
     link: "/categoria/feminino"
   }
 ];
@@ -77,11 +78,15 @@ const HeroBanner = memo(function HeroBanner() {
           className="absolute inset-0"
         >
           <div className="absolute inset-0 bg-gradient-to-t from-brand-bg via-transparent to-black/20 z-10" />
-          <img
+          <StableImage
             src={activeSlide.image}
+            fallbackSrc={DEFAULT_IMAGE_FALLBACK}
             alt="Destaque"
             className="h-full w-full object-cover opacity-70"
             referrerPolicy="no-referrer"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
           />
         </motion.div>
       </AnimatePresence>

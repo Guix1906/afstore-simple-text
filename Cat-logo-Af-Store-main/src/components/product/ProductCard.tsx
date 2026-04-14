@@ -40,7 +40,7 @@ const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
     >
       {/* Image Block */}
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-brand-card border border-brand-border/40">
-        <img
+        <StableImage
           src={getProductImageOrFallback(product.images, 500)}
           fallbackSrc={DEFAULT_IMAGE_FALLBACK}
           alt={product.name}
@@ -49,7 +49,6 @@ const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
           referrerPolicy="no-referrer"
           decoding="async"
           fetchPriority="low"
-          as={undefined}
         />
 
         {/* Badges - Simplified for mobile performance */}

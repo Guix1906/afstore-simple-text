@@ -1,4 +1,5 @@
-import { getOptimizedImage } from '../../utils/imageOptimizer';
+import StableImage from '../ui/StableImage';
+import { DEFAULT_IMAGE_FALLBACK, getOptimizedImage } from '../../utils/imageOptimizer';
 
 interface ProductGalleryProps {
   images: string[];
@@ -11,12 +12,15 @@ export default function ProductGallery({ images }: ProductGalleryProps) {
     <div className="flex flex-col w-full bg-brand-bg -mt-4">
       {images.map((imgUrl, i) => (
         <div key={i} className="w-full relative overflow-hidden bg-brand-card">
-          <img
+          <StableImage
             src={getOptimizedImage(imgUrl, 800)}
+            fallbackSrc={DEFAULT_IMAGE_FALLBACK}
             alt={`Foto ${i + 1}`}
             className="w-full h-auto object-cover min-h-[50vh]"
             referrerPolicy="no-referrer"
             loading={i === 0 ? "eager" : "lazy"}
+            fetchPriority={i === 0 ? 'high' : 'low'}
+            decoding="async"
           />
         </div>
       ))}

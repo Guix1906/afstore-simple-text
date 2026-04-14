@@ -80,7 +80,7 @@ export const useNewArrivals = () => {
 
 export const useProductsByCategory = (category: string, page = 0, limit = DEFAULT_PAGE_SIZE) => {
   return useQuery({
-    queryKey: [...QUERY_KEYS.productsByCategory(category), { page, limit }],
+    queryKey: QUERY_KEYS.productsByCategory(category),
     queryFn: () => productService.getProductsByCategory(category, page, limit),
     enabled: !!category,
     staleTime: DEFAULT_STALE_TIME,
