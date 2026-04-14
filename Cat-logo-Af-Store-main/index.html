@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+    <title>AF STORE - Fitness com Estilo</title>
+    <meta name="description" content="Catálogo online de roupas fitness femininas e masculinas. Fitness com estilo." />
+    <meta name="theme-color" content="#0b0b0b" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <script>
+      // Fail-safe para Safari/iPhone: Garante que o loader suma se houver erro crítico
+      window.onerror = function() {
+        var loader = document.getElementById('global-loader');
+        if (loader) loader.style.display = 'none';
+      };
+      // Timeout de emergência: Se em 4 segundos a página não abriu, força a saída do loader
+      setTimeout(function() {
+        var loader = document.getElementById('global-loader');
+        if (loader && !loader.classList.contains('loader-hidden')) {
+          loader.classList.add('loader-hidden');
+        }
+      }, 4000);
+    </script>
+    
+    <!-- Preload das fontes principais para evitar FOUC de texto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+      /* Evita flash branco antes do Tailwind carregar */
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #0b0b0b;
+        color: #FFFFFF;
+      }
+      
+      /* Global Initial Loader */
+      #global-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: #0b0b0b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.3s ease, visibility 0.3s;
+      }
+      .loader-logo-text {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 900;
+        text-transform: uppercase;
+        font-size: 24px;
+        letter-spacing: 0.1em;
+        color: #FFFFFF;
+        margin-bottom: 24px;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      .loader-spinner {
+        width: 40px;
+        height: 40px;
+        border: 2px solid rgba(212, 175, 55, 0.1);
+        border-top-color: #D4AF37; /* brand-gold */
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      .loader-hidden {
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="global-loader">
+      <div class="loader-logo-text">AF STORE</div>
+      <div class="loader-spinner"></div>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

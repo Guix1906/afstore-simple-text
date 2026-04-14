@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DM Serif Display", ui-serif, Georgia, serif;
+
+  --color-brand-bg: #0b0b0b;
+  --color-brand-graphite: #121212;
+  --color-brand-gold: #D4AF37;
+  --color-brand-gold-light: #F9E2AF;
+  --color-brand-card: #161616;
+  --color-brand-border: #222222;
+  --color-brand-text: #FFFFFF;
+  --color-brand-text-muted: #888888;
+  --color-brand-whatsapp: #22C55E;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: #0b0b0b;
+    @apply text-brand-text font-sans antialiased min-h-screen overscroll-none;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2 {
+    @apply font-serif font-bold uppercase tracking-tighter;
+  }
+
+  h3, h4, h5, h6 {
+    @apply font-sans font-bold tracking-tight;
+  }
+
+  button, 
+  .btn,
+  nav a {
+    @apply font-sans font-medium uppercase tracking-widest text-[11px];
+  }
+}
+
+@layer components {
+  .font-banner-display {
+    font-family: "DM Serif Display", ui-serif, Georgia, serif;
+  }
+
+  .font-banner-support {
+    font-family: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .btn-primary {
+    @apply bg-brand-gold text-black px-10 py-5 rounded-2xl hover:bg-brand-gold-light transition-all active:scale-95 font-black uppercase tracking-[0.2em] shadow-2xl shadow-brand-gold/10;
+  }
+  
+  .banner-title {
+    @apply font-serif font-black text-5xl md:text-8xl uppercase tracking-tighter leading-[0.9];
+  }
+}
+
+::selection {
+  @apply bg-brand-gold text-black;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0b0b;
+}
+::-webkit-scrollbar-thumb {
+  background: #222222;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D4AF37;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

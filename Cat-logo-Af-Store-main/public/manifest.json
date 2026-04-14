@@ -1,0 +1,21 @@
+{
+  "name": "AF STORE - Catálogo Fitness",
+  "short_name": "AF STORE",
+  "description": "Fitness com estilo - Catálogo online de roupas fitness femininas e masculinas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#C9A96E",
+  "icons": [
+    {
+      "src": "/af-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/af-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
