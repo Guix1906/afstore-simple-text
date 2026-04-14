@@ -1,4 +1,4 @@
-import { ImgHTMLAttributes, useMemo, useState } from 'react';
+import { ImgHTMLAttributes, useEffect, useMemo, useState } from 'react';
 
 interface StableImageProps extends ImgHTMLAttributes<HTMLImageElement> {
   fallbackSrc: string;
@@ -18,6 +18,12 @@ export default function StableImage({
   const [isLoaded, setIsLoaded] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [isFallback, setIsFallback] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(false);
+    setRetryCount(0);
+    setIsFallback(false);
+  }, [src]);
 
   const resolvedSrc = useMemo(() => {
     if (!src || isFallback) return fallbackSrc;

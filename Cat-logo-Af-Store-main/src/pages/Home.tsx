@@ -1,35 +1,60 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import PageWrapper from '../components/layout/PageWrapper';
 import HeroBanner from '../components/home/HeroBanner';
 import CategoryTabs from '../components/layout/CategoryTabs';
 import ProductSection from '../components/home/ProductSection';
 import WhatsAppBanner from '../components/home/WhatsAppBanner';
-import { useAllActiveProducts, QUERY_KEYS } from '../hooks/useOptimizedQueries';
+import { useInfiniteActiveProducts, QUERY_KEYS } from '../hooks/useOptimizedQueries';
 import { SectionSkeleton, HeroSkeleton } from '../components/layout/Skeletons';
 import { useQueryClient } from '@tanstack/react-query';
 import { productService } from '../services/productService';
 
 export default function Home() {
   const queryClient = useQueryClient();
-  const { data: products = [], isLoading } = useAllActiveProducts();
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteActiveProducts(12);
+
+  const products = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flat();
+  }, [data]);
 
   const sections = useMemo(() => {
     if (!products || products.length === 0) {
       return {
-        catalog: [],
-        bestSellers: [],
-          newArrivals: [],
+        newArrivals: [],
         onSale: [],
       };
     }
     
     return {
-      catalog: products.slice(0, 8),
-      bestSellers: products.filter(p => p.isBestSeller).slice(0, 4),
-        newArrivals: products,
+      newArrivals: products,
       onSale: products.filter(p => p.isOnSale).slice(0, 4)
     };
   }, [products]);
+
+  useEffect(() => {
+    const target = sentinelRef.current;
+    if (!target || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: '600px 0px' }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
 
   // Prefetch de categorias comuns para navegação ultra-rápida (Native Feel)
@@ -58,15 +83,6 @@ export default function Home() {
           <>
             <HeroBanner />
 
-            {sections.catalog.length > 0 && (
-              <ProductSection
-                title="Catálogo"
-                products={sections.catalog}
-                layout="grid"
-                viewAllLink="/novidades"
-              />
-            )}
-            
             {sections.newArrivals.length > 0 && (
               <ProductSection 
                 title="Novidades" 
@@ -87,6 +103,9 @@ export default function Home() {
 
           </>
         )}
+
+        {hasNextPage && <div ref={sentinelRef} className="h-10" aria-hidden="true" />}
+        {isFetchingNextPage && <SectionSkeleton titleWidth="w-0" count={4} />}
 
         <WhatsAppBanner />
       </div>
