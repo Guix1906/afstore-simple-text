@@ -125,6 +125,22 @@ const fetchProductsByIds = async (ids: string[]) => {
   return ids.map((id) => mapById.get(String(id))).filter(Boolean) as Product[];
 };
 
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs = 3500): Promise<T> => {
+  let timeoutId: number | undefined;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error('Request timeout')), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId !== undefined) {
+      window.clearTimeout(timeoutId);
+    }
+  }
+};
+
 const executeWithRetry = async <T>(
   queryFn: () => Promise<{ data: T | null; error: any }>,
   retries = 1
@@ -132,10 +148,14 @@ const executeWithRetry = async <T>(
   let lastError: any = null;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
-    const { data, error } = await queryFn();
+    try {
+      const { data, error } = await withTimeout(queryFn());
 
-    if (!error && data) return { data, error: null };
-    lastError = error;
+      if (!error && data) return { data, error: null };
+      lastError = error || new Error('Empty response');
+    } catch (error) {
+      lastError = error;
+    }
   }
 
   return { data: null as T | null, error: lastError };
