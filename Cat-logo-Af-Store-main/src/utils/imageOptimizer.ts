@@ -10,6 +10,11 @@ export const getOptimizedImage = (url: string, width = 600) => {
   const normalizedUrl = cleanImageUrl(url);
   if (!normalizedUrl) return DEFAULT_IMAGE_FALLBACK;
 
+  const targetWidth =
+    typeof window !== 'undefined' && window.innerWidth < 768
+      ? Math.min(width, 720)
+      : width;
+
   if (normalizedUrl.startsWith('data:') || normalizedUrl.startsWith('blob:')) {
     return normalizedUrl;
   }
@@ -22,7 +27,7 @@ export const getOptimizedImage = (url: string, width = 600) => {
   ) {
     // Adiciona parâmetros de transformação do Supabase
     const separator = normalizedUrl.includes('?') ? '&' : '?';
-    return `${normalizedUrl}${separator}width=${width}&quality=80`;
+    return `${normalizedUrl}${separator}width=${targetWidth}&quality=80&format=webp`;
   }
   
   return normalizedUrl;
