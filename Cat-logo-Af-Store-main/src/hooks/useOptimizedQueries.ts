@@ -21,10 +21,11 @@ const DEFAULT_PAGE_SIZE = 12;
 const DEFAULT_STALE_TIME = 1000 * 60 * 10; // 10 minutos
 
 // Hooks
-export const useProducts = (page = 0, limit = 20) => {
+export const useProducts = (page = 0, limit = 20, enabled = true) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.products, { page, limit }],
     queryFn: () => productService.getProducts(page, limit),
+    enabled,
     staleTime: DEFAULT_STALE_TIME,
     placeholderData: keepPreviousData,
     retry: 2,
@@ -99,10 +100,11 @@ export const useProduct = (id: string) => {
   });
 };
 
-export const useConfig = () => {
+export const useConfig = (enabled = true) => {
   return useQuery({
     queryKey: QUERY_KEYS.config,
     queryFn: () => configService.getConfig(),
+    enabled,
     staleTime: 1000 * 60 * 60, // Config rarely changes, cache for 1 hour
   });
 };

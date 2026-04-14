@@ -5,35 +5,34 @@ import { adminAuthService } from '../../services/adminAuthService';
 import { configService } from '../../services/configService';
 import { Plus, Edit2, Trash2, Settings, LogOut, ExternalLink, Package, MoreHorizontal, LayoutDashboard } from 'lucide-react';
 import { useEffect } from 'react';
+import { useAdminSession } from '../../hooks/useAdminSession';
+import { toast } from 'sonner';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [authChecked, setAuthChecked] = useState(false);
   const [actionError, setActionError] = useState('');
   const heroImageInputRef = useRef<HTMLInputElement | null>(null);
+  const { isReady, isAdmin } = useAdminSession();
+  const isAdminReady = isReady && isAdmin;
 
-  const { data: products = [], isLoading: isLoadingProducts, refetch: refetchProducts } = useProducts(0, 500);
-  const { data: config, isLoading: isLoadingConfig, refetch: refetchConfig } = useConfig();
+  const { data: products = [], isLoading: isLoadingProducts } = useProducts(0, 500, isAdminReady);
+  const { data: config, isLoading: isLoadingConfig, refetch: refetchConfig } = useConfig(isAdminReady);
   const { toggleActive, deleteProduct } = useProductMutations();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { isAdmin } = await adminAuthService.isAdmin();
-      if (!isAdmin) {
-        navigate('/admin');
-      } else {
-        setAuthChecked(true);
-      }
-    };
-    checkAuth();
-  }, [navigate]);
+    if (!isReady) return;
+    if (!isAdmin) navigate('/admin');
+  }, [isAdmin, isReady, navigate]);
 
   const handleToggleProduct = async (product: any) => {
     setActionError('');
     try {
       await toggleActive.mutateAsync({ id: product.id, active: !product.active });
+      toast.success(`Produto ${product.active ? 'pausado' : 'ativado'} com sucesso.`);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Erro ao atualizar status.');
+      const message = err instanceof Error ? err.message : 'Erro ao atualizar status.';
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -44,8 +43,11 @@ export default function AdminDashboard() {
     setActionError('');
     try {
       await deleteProduct.mutateAsync(product.id);
+      toast.success('Produto excluído com sucesso.');
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Erro ao excluir produto.');
+      const message = err instanceof Error ? err.message : 'Erro ao excluir produto.';
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -64,8 +66,10 @@ export default function AdminDashboard() {
     try {
       await configService.updateConfig({ ...config, whatsappNumber: normalized });
       refetchConfig();
+      toast.success('WhatsApp atualizado com sucesso.');
     } catch (err) {
       setActionError('Erro ao atualizar WhatsApp.');
+      toast.error('Erro ao atualizar WhatsApp.');
     }
   };
 
@@ -94,8 +98,10 @@ export default function AdminDashboard() {
       });
 
       refetchConfig();
+      toast.success('Banner atualizado com sucesso.');
     } catch (err) {
       setActionError('Erro ao atualizar imagens.');
+      toast.error('Erro ao atualizar imagens.');
     } finally {
       event.target.value = '';
     }
@@ -113,8 +119,10 @@ export default function AdminDashboard() {
         heroImageUrls: newUrls,
       });
       refetchConfig();
+      toast.success('Imagem removida com sucesso.');
     } catch (err) {
       setActionError('Erro ao remover imagem.');
+      toast.error('Erro ao remover imagem.');
     }
   };
 
@@ -123,7 +131,7 @@ export default function AdminDashboard() {
     navigate('/admin');
   };
 
-  if (!authChecked) {
+  if (!isReady || !isAdminReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-brand-bg">
         <div className="w-8 h-8 border-2 border-brand-gold/30 border-t-brand-gold rounded-full animate-spin" />
@@ -276,12 +284,14 @@ export default function AdminDashboard() {
                          <div className="flex items-center gap-2">
                             <button 
                               onClick={() => handleToggleProduct(product)}
+                              disabled={toggleActive.isPending}
                               className={`h-11 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${product.active ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}
                             >
                               {product.active ? 'Ativo' : 'Pausado'}
                             </button>
                             <button 
                               onClick={() => handleDeleteProduct(product)}
+                              disabled={deleteProduct.isPending}
                               className="w-11 h-11 flex items-center justify-center bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl transition-all"
                             >
                               <Trash2 size={16} />
