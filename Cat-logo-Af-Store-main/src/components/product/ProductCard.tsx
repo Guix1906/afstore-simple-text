@@ -59,7 +59,7 @@ const ProductCard = memo(function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
           {product.isOnSale && (
-            <span className="bg-red-500 text-white text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-sm shadow-lg">
+            <span className="bg-brand-danger text-brand-text text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-sm shadow-lg">
               SALE
             </span>
           )}

@@ -13,6 +13,7 @@
   --color-brand-text: #FFFFFF;
   --color-brand-text-muted: #888888;
   --color-brand-whatsapp: #22C55E;
+  --color-brand-danger: #EF4444;
 }
 
 @layer base {
