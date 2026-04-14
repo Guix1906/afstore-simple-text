@@ -118,10 +118,9 @@ export const getResponsiveImageSources = (url: string) => {
   }
 
   if (!isSupabaseStorageImage(normalizedUrl)) {
-    const localWebp = toLocalWebpUrl(normalizedUrl);
     return {
       src: normalizedUrl,
-      webpSrcSet: localWebp,
+      webpSrcSet: '',
       avifSrcSet: '',
     };
   }
