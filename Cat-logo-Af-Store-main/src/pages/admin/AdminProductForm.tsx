@@ -7,6 +7,8 @@ import { CATEGORIES } from '../../constants';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useAdminSession } from '../../hooks/useAdminSession';
+import StableImage from '../../components/ui/StableImage';
+import { DEFAULT_IMAGE_FALLBACK, getOptimizedImage } from '../../utils/imageOptimizer';
 
 const productSchema = z.object({
   name: z.string().trim().min(3, 'O nome do produto precisa ter pelo menos 3 caracteres.'),
@@ -16,6 +18,7 @@ const productSchema = z.object({
 });
 
 export default function AdminProductForm() {
+  const MAX_IMAGE_SIZE_BYTES = 6 * 1024 * 1024;
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -23,6 +26,7 @@ export default function AdminProductForm() {
   const [error, setError] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { isReady, isAdmin } = useAdminSession();
 
@@ -73,6 +77,17 @@ export default function AdminProductForm() {
       }),
     [formData.description, formData.images, formData.name, formData.price]
   );
+
+  const categoryOptions = useMemo(() => {
+    const base = CATEGORIES.map((c) => c.slug);
+    const current = (formData.category || '').trim();
+
+    if (current && !base.includes(current)) {
+      base.push(current);
+    }
+
+    return base;
+  }, [formData.category]);
 
   const saveProduct = useCallback(async () => {
     if (!parsedForm.success) {
@@ -136,10 +151,16 @@ export default function AdminProductForm() {
     });
 
   const processFiles = async (files: File[]) => {
-    const validFiles = files.filter(f => f.type.startsWith('image/'));
+    const validFiles = files.filter((f) => f.type.startsWith('image/') && f.size <= MAX_IMAGE_SIZE_BYTES);
     if (!validFiles.length) {
-      setError('Arraste apenas imagens válidas (PNG/JPG).');
+      const message = 'Use imagens PNG/JPG/WEBP de até 6MB.';
+      setError(message);
+      toast.error(message);
       return;
+    }
+
+    if (validFiles.length !== files.length) {
+      toast.error('Algumas imagens foram ignoradas por formato/tamanho inválido.');
     }
     
     setError('');
@@ -159,7 +180,20 @@ export default function AdminProductForm() {
     } finally {
       setIsUploadingImage(false);
     }
-  }
+  };
+
+  const handleAddCategory = () => {
+    const normalized = customCategory.trim().toLowerCase();
+    if (!normalized) return;
+    if (normalized.length < 3) {
+      toast.error('Categoria deve ter pelo menos 3 caracteres.');
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, category: normalized }));
+    setCustomCategory('');
+    toast.success('Categoria aplicada ao produto.');
+  };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -284,10 +318,25 @@ export default function AdminProductForm() {
                     onChange={e => setFormData({...formData, category: e.target.value})}
                     className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:border-brand-gold outline-none appearance-none cursor-pointer"
                   >
-                    {CATEGORIES.map(c => (
-                       <option key={c.slug} value={c.slug}>{c.name}</option>
+                    {categoryOptions.map((slug) => (
+                       <option key={slug} value={slug}>{slug}</option>
                     ))}
                   </select>
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      placeholder="Nova categoria"
+                      className="w-full bg-[#121212] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-gold outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCategory}
+                      className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold uppercase tracking-wider"
+                    >
+                      Adicionar
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-[#888] ml-1">Gênero</label>
@@ -373,7 +422,15 @@ export default function AdminProductForm() {
                  <div className="grid grid-cols-2 gap-3 mt-4">
                    {formData.images.map((img, i) => (
                      <div key={i} className="relative aspect-[3/4] bg-black border border-white/10 rounded-xl overflow-hidden group">
-                        <img src={img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                         <StableImage
+                           src={getOptimizedImage(img, 480)}
+                           fallbackSrc={DEFAULT_IMAGE_FALLBACK}
+                           showSkeleton={false}
+                           alt="Pré-visualização da foto"
+                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                           loading="lazy"
+                           decoding="async"
+                         />
                         <div className="absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-black/80 to-transparent" />
                         {i === 0 && (
                            <div className="absolute top-2 left-2 bg-brand-gold text-black text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded">Capa</div>
