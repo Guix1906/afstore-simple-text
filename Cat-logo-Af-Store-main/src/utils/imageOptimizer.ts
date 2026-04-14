@@ -19,8 +19,16 @@ const appendTransformParams = (
 ) => {
   if (!isSupabaseStorageImage(url)) return url;
 
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}width=${params.width}&quality=${params.quality}&format=${params.format}`;
+  try {
+    const parsed = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'https://localhost');
+    parsed.searchParams.set('width', String(params.width));
+    parsed.searchParams.set('quality', String(params.quality));
+    parsed.searchParams.set('format', params.format);
+    return parsed.toString();
+  } catch {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}width=${params.width}&quality=${params.quality}&format=${params.format}`;
+  }
 };
 
 const clampResponsiveWidth = (width: number) => {
