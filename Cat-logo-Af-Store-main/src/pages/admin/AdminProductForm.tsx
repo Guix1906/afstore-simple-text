@@ -402,13 +402,13 @@ export default function AdminProductForm() {
                            loading="lazy"
                            decoding="async"
                          />
-                        <div className="absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-black/80 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 top-1/2 bg-gradient-to-t from-brand-bg/80 to-transparent" />
                         {i === 0 && (
-                           <div className="absolute top-2 left-2 bg-brand-gold text-black text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded">Capa</div>
+                           <div className="absolute top-2 left-2 bg-brand-gold text-brand-primary-foreground text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded">Capa</div>
                         )}
                         <button 
                           onClick={() => handleRemoveImage(i)}
-                          className="absolute bottom-2 right-2 p-2 bg-white/10 hover:bg-red-500/80 backdrop-blur text-white rounded-full transition-colors"
+                          className="absolute bottom-2 right-2 p-2 bg-brand-card/80 hover:bg-brand-danger backdrop-blur text-brand-text rounded-full transition-colors"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -422,35 +422,35 @@ export default function AdminProductForm() {
                 <h2 className="text-sm font-bold text-brand-text tracking-wide border-b border-brand-border pb-4">Tráfego & Destaques</h2>
                
                <div className="space-y-3">
-                 <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.active ? 'bg-green-500/5 border-green-500/20' : 'bg-transparent border-white/5 opacity-60'}`}>
-                   <input type="checkbox" checked={formData.active} onChange={e => setFormData({...formData, active: e.target.checked})} className="w-4 h-4 accent-green-500" />
+                  <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.active ? 'bg-brand-gold/10 border-brand-gold/30' : 'bg-transparent border-brand-border opacity-70'}`}>
+                    <input type="checkbox" checked={formData.active} onChange={e => setFormData({...formData, active: e.target.checked})} className="w-4 h-4 accent-brand-gold" />
                    <div>
-                     <span className="block text-[11px] font-bold uppercase tracking-widest text-white">Ativo na Loja</span>
-                     <span className="block text-[9px] text-[#888] mt-0.5">Visível para clientes</span>
+                      <span className="block text-[11px] font-bold uppercase tracking-widest text-brand-text">Ativo na Loja</span>
+                      <span className="block text-[9px] text-brand-text-muted mt-0.5">Visível para clientes</span>
                    </div>
                  </label>
 
-                 <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isBestSeller ? 'bg-brand-gold/5 border-brand-gold/20' : 'bg-transparent border-white/5 opacity-60'}`}>
+                  <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isBestSeller ? 'bg-brand-gold/10 border-brand-gold/30' : 'bg-transparent border-brand-border opacity-70'}`}>
                    <input type="checkbox" checked={formData.isBestSeller} onChange={e => setFormData({...formData, isBestSeller: e.target.checked})} className="w-4 h-4 accent-brand-gold" />
                    <div>
-                     <span className="block text-[11px] font-bold uppercase tracking-widest text-[#FFD700]">Mais Vendido</span>
-                     <span className="block text-[9px] text-[#888] mt-0.5">Ganhe destaque no menu</span>
+                      <span className="block text-[11px] font-bold uppercase tracking-widest text-brand-gold">Mais Vendido</span>
+                      <span className="block text-[9px] text-brand-text-muted mt-0.5">Ganhe destaque no menu</span>
                    </div>
                  </label>
 
-                 <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isNew ? 'bg-brand-gold/5 border-brand-gold/20' : 'bg-transparent border-white/5 opacity-60'}`}>
+                  <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isNew ? 'bg-brand-gold/10 border-brand-gold/30' : 'bg-transparent border-brand-border opacity-70'}`}>
                    <input type="checkbox" checked={formData.isNew} onChange={e => setFormData({...formData, isNew: e.target.checked})} className="w-4 h-4 accent-brand-gold" />
                    <div>
                      <span className="block text-[11px] font-bold uppercase tracking-widest text-brand-gold">Novidade</span>
-                     <span className="block text-[9px] text-[#888] mt-0.5">Aparece na aba Novidades</span>
+                      <span className="block text-[9px] text-brand-text-muted mt-0.5">Aparece na aba Novidades</span>
                    </div>
                  </label>
 
-                 <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isOnSale ? 'bg-red-500/5 border-red-500/20' : 'bg-transparent border-white/5 opacity-60'}`}>
-                   <input type="checkbox" checked={formData.isOnSale} onChange={e => setFormData({...formData, isOnSale: e.target.checked})} className="w-4 h-4 accent-red-500" />
+                  <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-colors ${formData.isOnSale ? 'bg-brand-danger/10 border-brand-danger/30' : 'bg-transparent border-brand-border opacity-70'}`}>
+                    <input type="checkbox" checked={formData.isOnSale} onChange={e => setFormData({...formData, isOnSale: e.target.checked})} className="w-4 h-4 accent-brand-danger" />
                    <div>
-                     <span className="block text-[11px] font-bold uppercase tracking-widest text-white">Oferta Extra</span>
-                     <span className="block text-[9px] text-[#888] mt-0.5">Aparece na aba Promoções</span>
+                      <span className="block text-[11px] font-bold uppercase tracking-widest text-brand-text">Oferta Extra</span>
+                      <span className="block text-[9px] text-brand-text-muted mt-0.5">Aparece na aba Promoções</span>
                    </div>
                  </label>
                </div>
@@ -460,8 +460,8 @@ export default function AdminProductForm() {
         </div>
 
         {error && (
-            <div className="mt-8 bg-red-500/10 border border-red-500/30 p-4 rounded-xl text-center">
-              <span className="text-sm font-semibold text-red-400">{error}</span>
+            <div className="mt-8 bg-brand-danger/10 border border-brand-danger/30 p-4 rounded-xl text-center">
+              <span className="text-sm font-semibold text-brand-danger">{error}</span>
             </div>
         )}
       </main>
