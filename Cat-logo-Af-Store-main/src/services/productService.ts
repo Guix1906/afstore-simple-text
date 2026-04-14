@@ -16,6 +16,21 @@ const paginate = <T,>(items: T[], page = 0, limit = PAGE_SIZE_FALLBACK) => {
   return items.slice(start, start + safeLimit);
 };
 
+const toSlug = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+
+const buildSlug = (name?: string, fallbackId?: string) => {
+  const base = toSlug(name || '') || 'produto';
+  const suffix = (fallbackId || crypto.randomUUID()).slice(0, 8);
+  return `${base}-${suffix}`;
+};
+
 // Função ultra-segura de conversão
 const mapProduct = (p: any): Product => ({
   id: String(p.id),
@@ -120,14 +135,20 @@ export const productService = {
   },
 
   async createProduct(product: Partial<Product>): Promise<Product> {
-    const payload = sanitizePayload(product);
+    const payload = sanitizePayload({
+      ...product,
+      slug: product.slug?.trim() || buildSlug(product.name),
+    });
     const { data, error } = await supabase.from('products').insert(payload).select('*').single();
     if (error) throw error;
     return mapProduct(data);
   },
 
   async updateProduct(id: string, product: Partial<Product>): Promise<Product> {
-    const payload = sanitizePayload(product);
+    const payload = sanitizePayload({
+      ...product,
+      slug: product.slug?.trim() || (product.name ? buildSlug(product.name, id) : undefined),
+    });
     const { data, error } = await supabase.from('products').update(payload).eq('id', id).select('*').single();
     if (error) throw error;
     return mapProduct(data);
@@ -135,7 +156,8 @@ export const productService = {
 
 
   async deleteProduct(id: string): Promise<void> {
-    await supabase.from('products').delete().eq('id', id);
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) throw error;
   },
 
   async getProductsByCategory(category: string, page = 0, limit = PAGE_SIZE_FALLBACK): Promise<Product[]> {
@@ -194,7 +216,8 @@ export const productService = {
   },
 
   async toggleProductActive(id: string, active: boolean): Promise<void> {
-    await supabase.from('products').update({ active }).eq('id', id);
+    const { error } = await supabase.from('products').update({ active }).eq('id', id);
+    if (error) throw error;
   },
 
 };
