@@ -16,7 +16,7 @@ const CategoryTabs = memo(function CategoryTabs() {
 
 
   const handlePrefetch = (slug: string) => {
-    if (!slug) return;
+    if (!slug || slug === 'home' || slug === 'novidades') return;
     queryClient.prefetchQuery({
       queryKey: QUERY_KEYS.productsByCategory(slug),
       queryFn: () => productService.getProductsByCategory(slug, 0, 8),

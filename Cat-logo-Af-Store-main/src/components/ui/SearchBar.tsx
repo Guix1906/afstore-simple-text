@@ -1,15 +1,16 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function SearchBar() {
   const { searchQuery, setSearchQuery } = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    if (window.location.pathname !== '/busca') {
+    if (location.pathname !== '/busca') {
       navigate('/busca');
     }
   };

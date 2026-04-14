@@ -5,6 +5,7 @@ import ProductCard from '../components/product/ProductCard';
 import { useActiveProducts } from '../hooks/useOptimizedQueries';
 import { ChevronLeft, Sparkles } from 'lucide-react';
 import { SectionSkeleton } from '../components/layout/Skeletons';
+import { goBackOr } from '../utils/navigation';
 
 export default function NewArrivalsPage() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function NewArrivalsPage() {
       <div className="sticky top-16 z-40 bg-brand-bg border-b border-white/5">
         <div className="px-5 h-20 flex items-center gap-4">
           <button 
-            onClick={() => navigate(-1)} 
+            onClick={() => goBackOr(navigate, '/')} 
             className="w-10 h-10 flex items-center justify-center text-white bg-[#181818] border border-white/10 rounded-full active:scale-95 transition-transform"
           >
             <ChevronLeft size={20} />
