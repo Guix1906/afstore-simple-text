@@ -5,6 +5,23 @@ import { Toaster } from 'sonner';
 import App from './App.tsx';
 import './index.css';
 
+const safeSessionStorage = {
+  get(key: string) {
+    try {
+      return window.sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  set(key: string, value: string) {
+    try {
+      window.sessionStorage.setItem(key, value);
+    } catch {
+      // noop
+    }
+  },
+};
+
 const isInIframe = (() => {
   try {
     return window.self !== window.top;
@@ -26,10 +43,10 @@ if (typeof window !== 'undefined') {
   const recoverFromChunkError = (message: string) => {
     if (!isChunkLoadError(message)) return;
 
-    const alreadyReloaded = sessionStorage.getItem(reloadKey) === '1';
+    const alreadyReloaded = safeSessionStorage.get(reloadKey) === '1';
     if (alreadyReloaded) return;
 
-    sessionStorage.setItem(reloadKey, '1');
+    safeSessionStorage.set(reloadKey, '1');
     window.location.reload();
   };
 

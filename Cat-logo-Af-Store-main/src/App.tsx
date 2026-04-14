@@ -5,6 +5,30 @@ import BottomNav from './components/layout/BottomNav';
 import SidebarMenu from './components/layout/SidebarMenu';
 import FloatingWhatsApp from './components/layout/FloatingWhatsApp';
 
+const safeSessionStorage = {
+  get(key: string) {
+    try {
+      return window.sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  set(key: string, value: string) {
+    try {
+      window.sessionStorage.setItem(key, value);
+    } catch {
+      // noop
+    }
+  },
+  remove(key: string) {
+    try {
+      window.sessionStorage.removeItem(key);
+    } catch {
+      // noop
+    }
+  },
+};
+
 const createRetryableLazy = <T extends Record<string, any>>(
   importFn: () => Promise<T>,
   moduleKey: string
@@ -13,7 +37,7 @@ const createRetryableLazy = <T extends Record<string, any>>(
     try {
       const loaded = await importFn();
       if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(`lazy-reload:${moduleKey}`);
+        safeSessionStorage.remove(`lazy-reload:${moduleKey}`);
       }
       return loaded;
     } catch (error) {
@@ -24,10 +48,10 @@ const createRetryableLazy = <T extends Record<string, any>>(
 
       if (typeof window !== 'undefined' && isDynamicImportFetchError) {
         const reloadKey = `lazy-reload:${moduleKey}`;
-        const hasReloaded = sessionStorage.getItem(reloadKey) === '1';
+        const hasReloaded = safeSessionStorage.get(reloadKey) === '1';
 
         if (!hasReloaded) {
-          sessionStorage.setItem(reloadKey, '1');
+          safeSessionStorage.set(reloadKey, '1');
           window.location.reload();
           return new Promise<never>(() => {});
         }

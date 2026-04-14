@@ -1,4 +1,10 @@
 {
   "whatsappNumber": "5599985530617",
-  "whatsappMessage": "Olá! Vim pelo catálogo da AF STORE, pode me ajudar?"
+  "whatsappMessage": "Olá! Vim pelo catálogo da AF STORE, pode me ajudar?",
+  "heroImageUrl": "/WhatsApp%20Image%202026-04-12%20at%2020.49.18.jpeg",
+  "heroImageUrls": [
+    "/WhatsApp%20Image%202026-04-12%20at%2020.49.18.jpeg",
+    "/WhatsApp%20Image%202026-04-12%20at%2020.47.23.jpeg",
+    "/WhatsApp%20Image%202026-04-12%20at%2020.45.37%20(2).jpeg"
+  ]
 }
