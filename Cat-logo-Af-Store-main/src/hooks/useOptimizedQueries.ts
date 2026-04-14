@@ -121,6 +121,7 @@ export const useConfig = (enabled = true) => {
     queryFn: () => configService.getConfig(),
     enabled,
     staleTime: 1000 * 60 * 60, // Config rarely changes, cache for 1 hour
+    refetchOnMount: 'always',
   });
 };
 
@@ -137,12 +138,20 @@ export const useSearchProducts = (query: string) => {
 export const useProductMutations = () => {
   const queryClient = useQueryClient();
 
+  const invalidateCatalogQueries = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allActiveProducts });
+    queryClient.invalidateQueries({ queryKey: ['products', 'active', 'infinite'] });
+    queryClient.invalidateQueries({ queryKey: ['products', 'category'] });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
+    queryClient.invalidateQueries({ queryKey: ['products', 'search'] });
+  };
+
   const createMutation = useMutation({
     mutationFn: (product: Partial<Product>) => productService.createProduct(product),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
+      invalidateCatalogQueries();
     },
   });
 
@@ -150,9 +159,7 @@ export const useProductMutations = () => {
     mutationFn: ({ id, product }: { id: string; product: Partial<Product> }) =>
       productService.updateProduct(id, product),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
+      invalidateCatalogQueries();
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.product(variables.id) });
     },
   });
@@ -160,9 +167,7 @@ export const useProductMutations = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => productService.deleteProduct(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
+      invalidateCatalogQueries();
     },
   });
 
@@ -170,9 +175,7 @@ export const useProductMutations = () => {
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       productService.toggleProductActive(id, active),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeProducts });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.newArrivals });
+      invalidateCatalogQueries();
     },
   });
 
