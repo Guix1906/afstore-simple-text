@@ -79,7 +79,9 @@ const HeroBanner = memo(function HeroBanner() {
     );
   }
 
-  const activeSlide = slides[current % slides.length];
+  const activeSlideIndex = current % slides.length;
+  const activeSlide = slides[activeSlideIndex];
+  const shouldPrioritizeImage = activeSlideIndex === 0;
 
   return (
     <div className="relative h-[65vh] w-full overflow-hidden bg-brand-bg rounded-b-[3rem]">
@@ -99,8 +101,8 @@ const HeroBanner = memo(function HeroBanner() {
             alt="Destaque"
             className="h-full w-full object-cover opacity-70"
             referrerPolicy="no-referrer"
-            loading="eager"
-            fetchPriority="high"
+            loading={shouldPrioritizeImage ? 'eager' : 'lazy'}
+            fetchPriority={shouldPrioritizeImage ? 'high' : 'low'}
             decoding="async"
           />
         </motion.div>
