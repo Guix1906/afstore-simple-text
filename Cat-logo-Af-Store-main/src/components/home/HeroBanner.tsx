@@ -27,6 +27,7 @@ const HeroBanner = memo(function HeroBanner() {
   const navigate = useNavigate();
   const { data: config, isLoading } = useConfig();
   const [current, setCurrent] = useState(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   const slides = useMemo(() => {
     if (!config) return DEFAULT_SLIDES;
@@ -50,10 +51,24 @@ const HeroBanner = memo(function HeroBanner() {
 
   useEffect(() => {
     if (slides.length <= 1) return;
+
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduceMotion(media.matches);
+
+    const onMotionChange = (event: MediaQueryListEvent) => setReduceMotion(event.matches);
+    media.addEventListener('change', onMotionChange);
+
+    if (media.matches) {
+      return () => media.removeEventListener('change', onMotionChange);
+    }
+
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % slides.length);
     }, 5000);
-    return () => clearInterval(timer);
+    return () => {
+      media.removeEventListener('change', onMotionChange);
+      clearInterval(timer);
+    };
   }, [slides.length]);
 
   if (isLoading) {
@@ -71,10 +86,10 @@ const HeroBanner = memo(function HeroBanner() {
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSlide.id}
-          initial={{ opacity: 0 }}
+          initial={reduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
+          exit={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
+          transition={reduceMotion ? { duration: 0 } : { duration: 0.45, ease: 'easeInOut' }}
           className="absolute inset-0"
         >
           <div className="absolute inset-0 bg-gradient-to-t from-brand-bg via-transparent to-black/20 z-10" />
@@ -94,9 +109,9 @@ const HeroBanner = memo(function HeroBanner() {
       <div className="absolute inset-0 z-20 flex flex-col items-center justify-end pb-20 px-6 text-center">
         <motion.div
           key={`content-${activeSlide.id}`}
-          initial={{ y: 20, opacity: 0 }}
+          initial={reduceMotion ? false : { y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          transition={reduceMotion ? { duration: 0 } : { duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col items-center"
         >
           <h2 className="font-banner-display text-4xl md:text-6xl font-bold text-brand-text mb-2 leading-tight normal-case">
