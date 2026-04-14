@@ -6,6 +6,7 @@ import { CATEGORIES } from '../constants';
 import { useInfiniteActiveProducts, useInfiniteProductsByCategory } from '../hooks/useOptimizedQueries';
 import { ChevronLeft, SlidersHorizontal, Plus } from 'lucide-react';
 import { SectionSkeleton } from '../components/layout/Skeletons';
+import { goBackOr } from '../utils/navigation';
 
 export default function CategoryPage() {
   const { slug } = useParams();
@@ -69,7 +70,7 @@ export default function CategoryPage() {
         <div className="px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => navigate(-1)} 
+              onClick={() => goBackOr(navigate, '/')} 
               className="w-10 h-10 flex items-center justify-center text-white bg-[#181818] border border-white/10 rounded-full active:scale-95"
             >
               <ChevronLeft size={20} />
