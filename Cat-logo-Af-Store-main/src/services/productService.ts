@@ -75,6 +75,39 @@ const sanitizePayload = (p: Partial<Product>) => ({
 });
 
 export const productService = {
+  async getAllActiveProducts(): Promise<Product[]> {
+    const pageSize = 200;
+    let page = 0;
+    const allProducts: Product[] = [];
+
+    while (true) {
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('active', true)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error || !data) {
+        return (localProducts as any[])
+          .map(mapProduct)
+          .filter((p) => p.active)
+          .sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
+      }
+
+      const mapped = data.map(mapProduct);
+      allProducts.push(...mapped);
+
+      if (mapped.length < pageSize) break;
+      page += 1;
+    }
+
+    return allProducts;
+  },
+
   async getActiveProducts(page = 0, limit = PAGE_SIZE_FALLBACK): Promise<Product[]> {
     const { safePage, safeLimit } = normalizePagination(page, limit);
     const from = safePage * safeLimit;

@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import PageWrapper from '../components/layout/PageWrapper';
 import ProductCard from '../components/product/ProductCard';
-import { useNewArrivals } from '../hooks/useOptimizedQueries';
+import { useAllActiveProducts } from '../hooks/useOptimizedQueries';
 import { ChevronLeft, Sparkles } from 'lucide-react';
 import { SectionSkeleton } from '../components/layout/Skeletons';
 import { goBackOr } from '../utils/navigation';
 
 export default function NewArrivalsPage() {
   const navigate = useNavigate();
-  const { data: displayProducts = [], isLoading, isFetching } = useNewArrivals();
+  const { data: displayProducts = [], isLoading, isFetching } = useAllActiveProducts();
 
   return (
     <PageWrapper>
